@@ -1,0 +1,61 @@
+.NavBar{
+    display: flex;
+    flex-direction: row;
+    max-width: 80%;
+    margin-bottom: 20px;
+}
+
+.links{
+    border: 1px solid black;
+    display: flex;
+    height: 70px;
+    margin-left: 5
+}
+
+.link{
+    color: red;
+    margin: 20px;
+}
+
+.logo{
+    width: 75px;
+    height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: aquamarine;
+    margin-right: 20px;
+}
+
+
+
+
+.LoginBox{
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 0.7rem 0.6rem rgba(0, 0, 0, 0.1);
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.username{
+
+}
+
+.field{
+
+}
+
+.passwordContainer{
+    display: flex;
+    flex-direction: column;
+}
+
+.loginButton{
+
+}
+
+.loginLink{
+
+}
