@@ -6,11 +6,11 @@ import { cookies } from 'next/headers'
 import { v4 as uuidv4 } from 'uuid';
 
 const pool = new Pool({
-    user: 'postgres',
-    password: 'p',
-    host: 'localhost',
-    database: 'votr_db',
-    port: 5433, // or the appropriate port for your PostgreSQL setup
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT),
   });
   
 
@@ -81,7 +81,7 @@ export async function createAccount(email: string, username: string, password: s
 
 
 export async function login(username: string, password: string) {
-  console.log("Entering login");
+  console.log("SERVER: Entering login");
   try {
     const client = await pool.connect();
 
@@ -90,7 +90,6 @@ export async function login(username: string, password: string) {
 
     // Get password from that user and compare
     const { rows: userData } = await client.query('SELECT user_id, passwordhash FROM users WHERE username = $1', [username]);
-    console.log(userData);
 
     if (userData.length === 0) {
       // User not found

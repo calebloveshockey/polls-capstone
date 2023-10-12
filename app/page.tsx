@@ -3,7 +3,6 @@ import styles from './page.module.css'
 import ThingsComponent from '../components/ThingsComponent';
 import Link from 'next/link';
 import './globals.css';
-import { Pool } from 'pg';
 
 
 

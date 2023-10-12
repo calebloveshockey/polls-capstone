@@ -1,11 +1,11 @@
 import { Pool } from 'pg';
 
 const pool = new Pool({
-  user: 'postgres',
-  password: 'p',
-  host: 'localhost',
-  database: 'votr_db',
-  port: 5433, // or the appropriate port for your PostgreSQL setup
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  port: Number(process.env.DB_PORT),
 });
 
 import {cache} from 'react';

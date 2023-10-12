@@ -8,13 +8,13 @@ console.log("Running dbinitializer");
 // Function that creates tables and fills with data
 const createTablesAndData = async () => {
 
-    const pool1 = new Pool({
-        user: 'postgres',
-        password: 'p',
-        host: 'localhost',
-        port: '5433',
-        database: 'votr_db',
-        });
+  const pool1 = new Pool({
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT),
+  });
 
     try {
       // Connect to the database
@@ -135,12 +135,12 @@ const createTablesAndData = async () => {
 
 // Creates initial database
 const createDatabase = async () => {
-    const pool2 = new Pool({
-        user: 'postgres',
-        password: 'p',
-        host: 'localhost',
-        port: '5433',
-        });
+  const pool2 = new Pool({
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+  });
 
   try {
     // Connect to the default postgres database
@@ -149,19 +149,19 @@ const createDatabase = async () => {
     // Check if the database exists
     const queryResult = await client.query(
       `SELECT datname FROM pg_catalog.pg_database WHERE datname = $1`,
-      ["votr_db"]
+      [process.env.DB_NAME]
     );
 
     if (queryResult.rowCount === 0) {
       // Database doesn't exist, create it
-      await client.query(`CREATE DATABASE ${"votr_db"}`);
-      console.log(`Database ${"votr_db"} created successfully.`);
+      await client.query(`CREATE DATABASE ${process.env.DB_NAME}`);
+      console.log(`Database ${process.env.DB_NAME} created successfully.`);
 
       // Create tables
       createTablesAndData();
 
     } else {
-      console.log(`Database ${"votr_db"} already exists.`);
+      console.log(`Database ${process.env.DB_NAME} already exists.`);
     }
 
     // Release the client instance
