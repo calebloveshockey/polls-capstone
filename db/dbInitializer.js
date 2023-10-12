@@ -9,11 +9,7 @@ console.log("Running dbinitializer");
 const createTablesAndData = async () => {
 
   const pool1 = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT),
+    connectionString: process.env.POSTGRES_URL + "?sslmode=require",
   });
 
     try {
@@ -136,10 +132,7 @@ const createTablesAndData = async () => {
 // Creates initial database
 const createDatabase = async () => {
   const pool2 = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
+    connectionString: process.env.POSTGRES_URL + "?sslmode=require",
   });
 
   try {
@@ -162,6 +155,7 @@ const createDatabase = async () => {
 
     } else {
       console.log(`Database ${process.env.DB_NAME} already exists.`);
+      createTablesAndData();
     }
 
     // Release the client instance
