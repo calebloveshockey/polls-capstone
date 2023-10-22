@@ -8,7 +8,7 @@ export default function Home() {
 
   return (
     <div className={styles.homeContent}>
-      <div className={styles.banner}>Welcome to the home page. Some sort of banner would go here.</div>
+      <div className={styles.banner}>Welcome to the home page. BANNER HERE</div>
       <Link href="/create-poll" className={styles.createButton}>Create a poll now!</Link>
     </div>
   )
