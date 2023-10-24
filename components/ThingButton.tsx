@@ -14,3 +14,5 @@ export default function ThingButton() {
         <button onClick={doClick}>BIG BUTTON HERE HEHHE</button>
     )
 }
+
+export { ThingButton };

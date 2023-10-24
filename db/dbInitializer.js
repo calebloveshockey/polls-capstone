@@ -47,7 +47,7 @@ const createTablesAndData = async () => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
           user_id SERIAL PRIMARY KEY,
-          email VARCHAR(100) NOT NULL,
+          email VARCHAR(100),
           username VARCHAR(100) NOT NULL,
           passwordhash VARCHAR(100) NOT NULL,
           type VARCHAR(20) NOT NULL
@@ -70,6 +70,7 @@ const createTablesAndData = async () => {
         CREATE TABLE IF NOT EXISTS polls (
           poll_id SERIAL PRIMARY KEY,
           question VARCHAR(1000) NOT NULL,
+          description VARCHAR(1000),
           type VARCHAR(20),
           create_date TIMESTAMP NOT NULL,
           close_date TIMESTAMP NOT NULL,
@@ -92,11 +93,11 @@ const createTablesAndData = async () => {
       // Responses table
       await client.query(`
         CREATE TABLE IF NOT EXISTS responses (
+          response_id SERIAL PRIMARY KEY,
           poll_id INTEGER NOT NULL,
           option_id INTEGER NOT NULL,
-          responder INTEGER NOT NULL,
+          responder INTEGER,
           rank INTEGER,
-          PRIMARY KEY (poll_id, option_id, responder),
           FOREIGN KEY (poll_id) REFERENCES polls(poll_id),
           FOREIGN KEY (option_id) REFERENCES options(option_id),
           FOREIGN KEY (responder) REFERENCES users(user_id)

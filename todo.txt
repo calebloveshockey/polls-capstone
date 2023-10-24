@@ -1,0 +1,15 @@
+- copy all builtin vercel styling to my app
+- review existing pages
+- Add the cool hover effect for the bottom links on OG app to the nav links on main app
+- make a dynamic nav link that checks if logged in and makes it "Account" and "Logout", otherwise it makes it "Login"
+- make default starting page just show "Loading..." and redirect to home page
+- Add feedback to login page
+- remove email from the app, since I never use it
+- redo .env to match with vercel to make things easier
+- eventually need to look at protecting the server actions more, as apparently they are exposed API endpoints
+- some sort of explanation of each poll type when creating a poll
+- eventually make the endDate picker be much better: especially need to add time not just date. I visualize a slider that can give you two different types of pickers, one for "pick a date and time", and one that is "how long do you want this poll to run"
+- eventually should add option descriptions
+- usernames should not be case sensitive
+- eventually fix how I have two exports on each component page, need to figure out which way is better and standardize
+- eventually standardize server action responses
