@@ -99,8 +99,7 @@ const createTablesAndData = async () => {
           responder INTEGER,
           rank INTEGER,
           FOREIGN KEY (poll_id) REFERENCES polls(poll_id),
-          FOREIGN KEY (option_id) REFERENCES options(option_id),
-          FOREIGN KEY (responder) REFERENCES users(user_id)
+          FOREIGN KEY (option_id) REFERENCES options(option_id)
         )`);
         console.log('Table "responses" created successfully.');
   

@@ -55,10 +55,9 @@ export default function CreatePoll() {
 
     const publishPoll = async () => {
         console.log("Publishing poll");
-        console.log(endDate);
 
         // Check that none of the inputs were left empty:
-        if(question !== "" && description !== "" && endDate !== null){
+        if(question !== "" && endDate !== null){
             // Format time field to a string
             const formattedTimestamp = endDate.format('YYYY-MM-DD HH:mm:ss');
             

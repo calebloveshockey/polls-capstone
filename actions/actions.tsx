@@ -397,6 +397,33 @@ export async function createPoll(
   }
 }
 
+// Get poll type from shareCode
+export async function getPollType(shareCode: string){
+  console.log("SERVER: entering get poll type");
+
+  try{
+    const client = await pool.connect();
+
+    // Select poll data
+    const {rows: pollData} = await client.query("SELECT type FROM polls WHERE share_link = $1", [shareCode]);
+
+    if(pollData.length === 1){
+        client.release();
+        return {status: "SUCCESS", pollType: pollData[0].type};
+    }
+
+    client.release();
+  }catch(error){
+    console.log("Error retrieving poll data: " + error);
+  }
+
+
+  return{
+    status: "FAILURE",
+    pollType: "",
+  }
+}
+
 
 // Get poll data from shareCode
 export async function getPollData(shareCode: string){
@@ -414,8 +441,6 @@ export async function getPollData(shareCode: string){
       if(optionsData.length > 1){
         
         client.release();
-        console.log(pollData[0]);
-        console.log(optionsData);
         return {status: "SUCCESS", pollData: pollData[0], options: optionsData};
       }
     }
@@ -435,7 +460,7 @@ export async function getPollData(shareCode: string){
 
 
 // Cast vote on a poll
-export async function castVote(poll_id: string, option_id: string){
+export async function castVote(poll_id: string, option_id: string, fakeUserId: number){
   console.log("SERVER: entering cast vote");
 
   // Check for user/validate
@@ -460,10 +485,53 @@ export async function castVote(poll_id: string, option_id: string){
     }
   }else{
     //vote without a userid
+
     try{
       const client = await pool.connect();
       
-      const result = await client.query('INSERT INTO responses (poll_id, option_id) VALUES ($1, $2)', [poll_id, option_id]);
+      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, fakeUserId]);
+      client.release();
+      return({status: "SUCCESS"}); 
+
+    }catch(error){
+      console.log("Error voting: " + error);
+    }
+  }
+
+  return{status: "FAILURE"};
+}
+
+// Cast vote on a poll
+export async function castRankedVote(poll_id: string, option_id: string, ranking: number, fakeUserId: number){
+  console.log("SERVER: entering cast vote");
+
+  // Check for user/validate
+  const validation = await validate();
+  if(validation.status && validation.status === "SUCCESS" && validation.username){
+
+    // vote with a userid
+    try{
+      const client = await pool.connect();
+      
+      // Get user id
+      const {rows: userData} = await client.query('SELECT user_id FROM users WHERE username = $1', [validation.username])
+      if (userData.length > 0) {
+
+        const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, userData[0].user_id, ranking]);
+        client.release();
+        return({status: "SUCCESS"});
+      }
+      client.release();
+    }catch(error){
+      console.log("Error voting: " + error);
+    }
+  }else{
+    //vote without a userid
+
+    try{
+      const client = await pool.connect();
+      
+      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, fakeUserId, ranking]);
       client.release();
       return({status: "SUCCESS"}); 
 
@@ -476,9 +544,9 @@ export async function castVote(poll_id: string, option_id: string){
 }
 
 
-// Get all votes
-export async function getVotes(shareCode: string){
-  console.log("SERVER: Entering get votes");
+// Get all votes for a traditional poll
+export async function getTradVotes(shareCode: string){
+  console.log("SERVER: Entering get trad votes");
 
   try{
     const client = await pool.connect();
@@ -493,23 +561,165 @@ export async function getVotes(shareCode: string){
 
       // Get all options
       const {rows: optionsData} = await client.query("SELECT option_id, option_name FROM options WHERE poll_id = $1", [pollData[0].poll_id]);
+      const optionVotes : {option_name : string, numVotes: number, votePercentage: number}[] = optionsData.reduce( (acc, option) => {
+        acc[option.option_id] = {
+          option_name: option.option_name,
+          numVotes: 0,
+          votePercentage: 0
+        };
+        return acc;
+      }, {});
 
-      // Chatgpt: tabulate how many rows in voteData there is for each option, and put this in return statement matching the format of the already 
-      // existing return statements
+      // Tabulate votes for each option
+      voteData.forEach((vote) => {
+        const optionId = vote.option_id;
+        optionVotes[optionId].numVotes++;
+      });
 
+      // Calculate total votes
+      const totalVotes = Object.values(optionVotes).reduce((total : number, option) => total + option.numVotes, 0);
 
+      // Calculate and set vote percentages
+      Object.values(optionVotes).forEach((option) => {
+        option.votePercentage = +((option.numVotes / totalVotes) * 100).toFixed(1);
+      });
 
-
+      client.release();
+      const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(optionVotes);
+      return genericOptionVotes;
 
     }
 
     client.release();
-    return [{option_name: "None", numVotes: 0}];
+    return [{option_name: "None", numVotes: 0, votePercentage: 0}];
   }catch(error){
     console.log("Error voting: " + error);
-  }
+  }            
 
 
-return [{option_name: "None", numVotes: 0}];
+return [{option_name: "None", numVotes: 0, votePercentage: 0}];
+
+}
+
+
+// Get all votes for an approval poll
+export async function getApprovalVotes(shareCode: string){
+  console.log("SERVER: Entering get approval votes");
+
+  try{
+    const client = await pool.connect();
+
+    // Get poll id
+    const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
+
+    if(pollData.length === 1){
+    
+      // Get all votes for this poll_id
+      const {rows: voteData} = await client.query('SELECT option_id, responder FROM responses WHERE poll_id = $1', [pollData[0].poll_id]);
+
+      // Get all options
+      const {rows: optionsData} = await client.query("SELECT option_id, option_name FROM options WHERE poll_id = $1", [pollData[0].poll_id]);
+      const optionVotes : {option_name : string, numVotes: number, votePercentage: number}[] = optionsData.reduce( (acc, option) => {
+        acc[option.option_id] = {
+          option_name: option.option_name,
+          numVotes: 0,
+          votePercentage: 0
+        };
+        return acc;
+      }, {});
+
+
+      // Tabulate votes for each option
+      voteData.forEach((vote) => {
+        const optionId = vote.option_id;
+        optionVotes[optionId].numVotes++;
+      });
+
+      // Calculate total votes
+      const totalVotes = Object.values(optionVotes).reduce((total : number, option) => total + option.numVotes, 0);
+
+      //Tabulate number of unique voters
+      const numUniqueVoters = new Set(voteData.map(vote => vote.responder)).size;
+
+
+      // Calculate and set vote percentages 
+      // CHATGPT WORK: change this to calculate what percentage of unique voters voted for each option, not based on total votes cast
+      Object.values(optionVotes).forEach((option) => {
+        option.votePercentage = +((option.numVotes / numUniqueVoters) * 100).toFixed(1);
+      });
+
+      client.release();
+      const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(optionVotes);
+      return {voters: numUniqueVoters, votes: genericOptionVotes};
+
+    }
+
+    client.release();
+    return {voters: 0, votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]};
+  }catch(error){
+    console.log("Error voting: " + error);
+  }            
+
+
+return {voters: 0, votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]};
+
+}
+
+
+
+// Get all votes for a traditional poll
+export async function getRankedVotes(shareCode: string){
+  console.log("SERVER: Entering get trad votes");
+
+  try{
+    const client = await pool.connect();
+
+    // Get poll id
+    const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
+
+    if(pollData.length === 1){
+    
+      // Get all votes for this poll_id
+      const {rows: voteData} = await client.query('SELECT option_id FROM responses WHERE poll_id = $1', [pollData[0].poll_id]);
+
+      // Get all options
+      const {rows: optionsData} = await client.query("SELECT option_id, option_name FROM options WHERE poll_id = $1", [pollData[0].poll_id]);
+      const optionVotes : {option_name : string, numVotes: number, votePercentage: number}[] = optionsData.reduce( (acc, option) => {
+        acc[option.option_id] = {
+          option_name: option.option_name,
+          numVotes: 0,
+          votePercentage: 0
+        };
+        return acc;
+      }, {});
+
+      // Tabulate votes for each option
+      voteData.forEach((vote) => {
+        const optionId = vote.option_id;
+        optionVotes[optionId].numVotes++;
+      });
+
+      // Calculate total votes
+      const totalVotes = Object.values(optionVotes).reduce((total : number, option) => total + option.numVotes, 0);
+
+      // Calculate and set vote percentages
+      Object.values(optionVotes).forEach((option) => {
+        option.votePercentage = +((option.numVotes / totalVotes) * 100).toFixed(1);
+      });
+
+      client.release();
+      const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(optionVotes);
+      return genericOptionVotes;
+
+    }
+
+    client.release();
+    return [{option_name: "None", numVotes: 0, votePercentage: 0}];
+  }catch(error){
+    console.log("Error voting: " + error);
+  }            
+
+
+return [{option_name: "None", numVotes: 0, votePercentage: 0}];
 
 }

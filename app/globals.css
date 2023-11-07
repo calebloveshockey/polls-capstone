@@ -2,6 +2,18 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+
+  --poll-color-1: 158, 124, 221; /* Soft Purple */
+  --poll-color-2: 98, 179, 170; /* Soft Teal */
+  --poll-color-3: 224, 155, 112; /* Soft Orange */
+  --poll-color-4: 173, 206, 183; /* Soft Sage Green */
+  --poll-color-5: 255, 188, 117; /* Soft Peach */
+  --poll-color-6: 138, 201, 211; /* Soft Sky Blue */
+  --poll-color-7: 222, 147, 95;  /* Soft Tan */
+  --poll-color-8: 201, 150, 167; /* Soft Rose */
+  --poll-color-9: 180, 201, 219; /* Soft Lavender */
+  --poll-color-10: 155, 221, 183; /* Soft Mint */
+  
 }
 
 * {

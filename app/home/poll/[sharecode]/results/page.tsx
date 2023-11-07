@@ -1,4 +1,4 @@
-import ShowVotes from './PollVoter'
+import ShowVotes from './ShowVotes'
 import styles from './page.module.css'
 export default function ViewPollPage({params} : {params: {sharecode: string}}) {
 

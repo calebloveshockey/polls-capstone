@@ -4,39 +4,38 @@ import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getUserData, getVotes} from '@/actions/actions';
+import { castVote, changePassword, createPoll, getPollData, getPollType, getUserData } from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
+import TradVotes, { TradResults } from './TradResults';
+import RankedResults from './RankedResults';
+import ApprovalResults from './ApprovalResults';
 
 interface ShowVoteProps {
     shareCode: string;
 }
 
 export default function ShowVotes({ shareCode }: ShowVoteProps) {
-    const router = useRouter();
 
-    const [showPoll, setShowPoll] = useState(false);
-    const [voteData, setVoteData] = useState([{option_name: "None", numVotes: 0}]);
+    const [pollType, setPollType] = useState("");
 
-
-    // Retrieve poll data
+    // Retrieve poll type
     useEffect( () => {
         const fetchData = async () => {
             try {
                 // GET DATA
-                const data = await getVotes(shareCode);
+                const data = await getPollType(shareCode);
 
-                if(data[0].option_name !== "None"){
-                    setVoteData(data);
-                    setShowPoll(true);
+                if(data.status === "SUCCESS"){
+                    setPollType(data.pollType);
                 }else{
-                    console.error("Error on server retrieving votes.")
+                    console.error("Error on server retrieving poll type.")
                 }
 
             } catch (error) {
-                console.error('Error retrieving votes:', error);
+                console.error('Error retrieving poll type:', error);
             }
         };
         
@@ -46,9 +45,9 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
 
     return (
         <>
-
-        {showPoll ? 
-            <>
+                {pollType === "Traditional" &&  <TradResults shareCode={shareCode}/> }
+                {pollType === "Ranked" && <RankedResults shareCode={shareCode}/>}
+                {pollType === "Approval" && <ApprovalResults shareCode={shareCode}/>}
 
                 <Box sx={{
                     borderTop: '2px solid black',
@@ -56,14 +55,6 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
                 }}>
                     DISCUSSION SECTION HERE
                 </Box>
-            </>
-        :
-            <>
-                <div>Data is not available.</div>
-            </>
-        }
-
-
         </>
     );
 }

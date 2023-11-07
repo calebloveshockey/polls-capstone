@@ -13,3 +13,12 @@
 - usernames should not be case sensitive
 - eventually fix how I have two exports on each component page, need to figure out which way is better and standardize
 - eventually standardize server action responses
+- add error checking for the "End Date" when creating a poll (should not be able to create a poll with an expiry date that is already expired)
+- definitely need to standardize the server action responses
+- privacy settings for polls 
+- way to know what the user voted for, and highlight that option in the poll
+- make results page live using polling or sockets
+- if the user sends empty options they forgot to delete when creating a new poll, these should just be ignored, I can see this being a common "user error".
+- Change the TradVoter etc. and TradResults etc, styling to use sheets since they share a lot of styling
+- Probably should order the results on the poll page
+- implement a non-account based cookie user tracking
