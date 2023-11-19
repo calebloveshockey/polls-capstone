@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import styles from './page.module.css'
-import ThingsComponent from '../../components/ThingsComponent';
 import Link from 'next/link';
 import LoginBox from '@/components/LoginBox';
 import SignupBox from '@/components/SignupBox';
@@ -10,8 +9,13 @@ export default function CreateAccount() {
   return (
     <div className={styles.mainLogin}>
       
-      <div className={styles.loginLogo}>LOGO HERE</div>
-      <div className={styles.loginText}>Welcome to the signup page</div>
+      <Image
+        src="/polls.svg"
+        width={80}
+        height={80}
+        alt="Website Logo"
+        className={styles.loginLogo}
+      />
       <SignupBox/>
 
     </div>

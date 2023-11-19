@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Loading from './Loading';
 
 export default function RerouteToHome() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function RerouteToHome() {
   })
 
   return (
-    <div>Placeholder</div>
+    <Loading/>
   )
 }
 

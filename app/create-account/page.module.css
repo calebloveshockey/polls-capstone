@@ -8,13 +8,14 @@
 .loginLogo{
     height: 200px;
     width: 200px;
-    background-color: darkolivegreen;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     margin-top: 10vh;
+    margin-bottom: 10vh;
 }
+
 
 .loginText{
     margin: 50px;

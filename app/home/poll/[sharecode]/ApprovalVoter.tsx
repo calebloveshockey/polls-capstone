@@ -74,14 +74,11 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
     const vote = async () => {
         console.log("Casting vote");
 
-        //in case vote without a userid
-        const fakeUserId =  Math.floor((Math.random() * 1000000000));
-
         // Get the list of selected option ids
         const selectedOptionIds = Object.keys(options).filter((optionId: string) => options[parseInt(optionId, 10)].selected);
 
         // Create an array of promises for parallel execution
-        const votePromises = selectedOptionIds.map((optionId: string) => castVote(pollData.poll_id, optionId, fakeUserId));
+        const votePromises = selectedOptionIds.map((optionId: string) => castVote(pollData.poll_id, optionId));
 
         // Wait for all promises to resolve
         const results = await Promise.all(votePromises);

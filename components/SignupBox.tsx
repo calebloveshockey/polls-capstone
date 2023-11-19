@@ -4,14 +4,13 @@ import { SetStateAction, useState } from 'react';
 import styles from './components.module.css';
 import { Box, Button, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, TextField } from '@mui/material';
 import { VisibilityOff, Visibility } from '@mui/icons-material';
-import { createAccount } from '@/actions/actions';
+import { createUserAccount } from '@/actions/actions';
 import { useRouter } from 'next/navigation'
 
 export default function SignupBox() {
 
     const router = useRouter();
 
-    const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,9 +19,6 @@ export default function SignupBox() {
 
     const randomID = Math.random();
 
-    const handleEmail = (newValue: SetStateAction<string>) => {
-        setEmail(newValue);
-    }
     const handleUsername = (newValue: SetStateAction<string>) => {
         setUsername(newValue);
     }
@@ -41,7 +37,7 @@ export default function SignupBox() {
 
     const handleCreate = async () => {
         console.log("Attempting to create account.");
-        const resp = await createAccount(email, username, password);
+        const resp = await createUserAccount(username, password);
         if(resp === "SUCCESS"){
             router.push('/login');
         }else{
@@ -51,20 +47,13 @@ export default function SignupBox() {
 
     return (
         <div className={styles.LoginBox}>
-            <TextField
-                value={email}
-                label="E-mail"
-                onChange={(event) => handleEmail(event.target.value)}
-                variant="filled"
-                className={styles.field}
-
-            />
+            <div className={styles.topBoxText}>Create a new account.</div>
             <TextField
                 value={username}
                 label="Username"
                 onChange={(event) => handleUsername(event.target.value)}
                 variant="filled"
-                className={styles.field}
+                className={styles.standardTextBox}
 
             />
             <div className={styles.passwordContainer}>
@@ -90,7 +79,8 @@ export default function SignupBox() {
                     }
                 />
                 </FormControl>
-
+            </div>
+            <div className={styles.passwordContainer}>
                 <FormControl 
                     variant="filled"
                 >

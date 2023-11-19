@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import styles from './page.module.css'
-import ThingsComponent from '../components/ThingsComponent';
 import Link from 'next/link';
 import './globals.css';
 
@@ -46,7 +45,6 @@ export default function Home() {
           priority
         />
         <h1>Hehe</h1>
-        <ThingsComponent/>
       </div>
 
       <div className={styles.grid}>

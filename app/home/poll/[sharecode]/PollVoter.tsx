@@ -1,14 +1,9 @@
 "use client"
 
-import { SetStateAction, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
-import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getPollType, getUserData} from '@/actions/actions';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import { Dayjs } from 'dayjs';
-import { useRouter } from 'next/navigation';
+import { Box } from '@mui/material';
+import { getPollType} from '@/actions/actions';
 import TradVoter from './TradVoter';
 import RankedVoter from './RankedVoter';
 import ApprovalVoter from './ApprovalVoter';

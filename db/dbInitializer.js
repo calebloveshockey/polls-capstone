@@ -18,38 +18,12 @@ const createTablesAndData = async () => {
   
       // --- CREATE TABLES ---
 
-      // Example things table with some random data TODO delete
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS things (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          fruit VARCHAR(100) NOT NULL
-        )
-      `);
-      // Generate random names and fruits
-      const names = ['John', 'Jane', 'Alice', 'Bob'];
-      const fruits = ['Apple', 'Banana', 'Orange', 'Mango'];
-      const getRandomIndex = (array) => Math.floor(Math.random() * array.length);
-      // Insert three random rows into the "things" table
-      for (let i = 0; i < 3; i++) {
-        const randomName = names[getRandomIndex(names)];
-        const randomFruit = fruits[getRandomIndex(fruits)];
-  
-        await client.query(
-          `INSERT INTO things (name, fruit) VALUES ($1, $2)`,
-          [randomName, randomFruit]
-        );
-      };
-
-      console.log('Table "things" created successfully.');
-
       // Users table
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
           user_id SERIAL PRIMARY KEY,
-          email VARCHAR(100),
-          username VARCHAR(100) NOT NULL,
-          passwordhash VARCHAR(100) NOT NULL,
+          username VARCHAR(100),
+          passwordhash VARCHAR(100),
           type VARCHAR(20) NOT NULL
         )`);
         console.log('Table "users" created successfully.');
@@ -71,7 +45,7 @@ const createTablesAndData = async () => {
           poll_id SERIAL PRIMARY KEY,
           question VARCHAR(1000) NOT NULL,
           description VARCHAR(1000),
-          type VARCHAR(20),
+          type VARCHAR(20) NOT NULL,
           create_date TIMESTAMP NOT NULL,
           close_date TIMESTAMP NOT NULL,
           share_link VARCHAR(500) NOT NULL,
@@ -96,7 +70,7 @@ const createTablesAndData = async () => {
           response_id SERIAL PRIMARY KEY,
           poll_id INTEGER NOT NULL,
           option_id INTEGER NOT NULL,
-          responder INTEGER,
+          responder INTEGER NOT NULL,
           rank INTEGER,
           FOREIGN KEY (poll_id) REFERENCES polls(poll_id),
           FOREIGN KEY (option_id) REFERENCES options(option_id)

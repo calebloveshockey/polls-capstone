@@ -81,10 +81,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
             return;
         }
 
-        //in case vote without a userid
-        const fakeUserId =  Math.floor((Math.random() * 1000000000));
-
-        const votePromises = rankingValues.map((r) => castRankedVote(pollData.poll_id, r.option_id, r.ranking, fakeUserId));
+        const votePromises = rankingValues.map((r) => castRankedVote(pollData.poll_id, r.option_id, r.ranking));
 
         try {
             // Wait for all promises to resolve

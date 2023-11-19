@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import styles from './components.module.css';
 import { useEffect, useState } from 'react';
-import { validate } from '@/actions/actions';
+import { validateUser } from '@/actions/actions';
 
 export default function NavBar() {
 
@@ -14,7 +14,7 @@ export default function NavBar() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const validation = await validate();
+        const validation = await validateUser();
         if (validation.status && validation.status === 'SUCCESS') {
           setUser(validation.username);
         }

@@ -30,6 +30,14 @@
 
 
 
+.topBoxText{
+    margin: 5px;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+
 
 .LoginBox{
     padding: 40px;
@@ -40,8 +48,8 @@
     flex-direction: column;
 }
 
-.username{
-
+.standardTextBox{
+    margin: 5px;
 }
 
 .field{
@@ -51,12 +59,15 @@
 .passwordContainer{
     display: flex;
     flex-direction: column;
+    margin: 5px;
 }
 
 .loginButton{
-
+    margin: 5px;
+    margin-bottom: 10px;
 }
 
 .loginLink{
-
+    text-align: center;
+    margin: 5px;
 }

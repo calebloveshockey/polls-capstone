@@ -44,8 +44,7 @@ export default function LoginBox() {
                 label="Username"
                 onChange={(event) => handleUsername(event.target.value)}
                 variant="filled"
-                className={styles.username}
-
+                className={styles.standardTextBox}
             />
             <div className={styles.passwordContainer}>
                 <FormControl 
@@ -76,8 +75,8 @@ export default function LoginBox() {
                 onClick={handleLogin}
                 variant="contained"
             >Login</Button>
-            <Link href={"/create-account"}><Box className={styles.loginLink}>Create an account</Box></Link>
-            <Link href={"/home"}><Box className={styles.loginLink}>Back</Box></Link>
+            <Link href={"/create-account"}><Box className={styles.loginLink}>Create an account...</Box></Link>
+            <Link href={"/home"}><Box className={styles.loginLink}>&#8592; Back</Box></Link>
         </div>
     );
 }

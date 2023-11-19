@@ -9,7 +9,6 @@ import { changePassword, getUserData} from '@/actions/actions';
 export default function AccountManagement() {
 
     const [username, setUsername] = useState("");
-    const [email, setEmail] = useState("");
     const [type, setType] = useState("");
 
     const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +27,6 @@ export default function AccountManagement() {
               // GET DATA
               const data = await getUserData();
               setUsername(data.username);
-              setEmail(data.email);
               setType(data.type);
 
             } catch (error) {
@@ -82,9 +80,6 @@ export default function AccountManagement() {
             <Box sx={{
                 margin: "10px",
             }}><b>Username:</b> {username}</Box>
-            <Box sx={{
-                margin: "10px",
-            }}><b>Email:</b> {email}</Box>
             <Box sx={{
                 margin: "10px",
                 marginBottom: "40px",

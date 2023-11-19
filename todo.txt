@@ -4,7 +4,6 @@
 - make a dynamic nav link that checks if logged in and makes it "Account" and "Logout", otherwise it makes it "Login"
 - make default starting page just show "Loading..." and redirect to home page
 - Add feedback to login page
-- remove email from the app, since I never use it
 - redo .env to match with vercel to make things easier
 - eventually need to look at protecting the server actions more, as apparently they are exposed API endpoints
 - some sort of explanation of each poll type when creating a poll
@@ -22,3 +21,6 @@
 - Change the TradVoter etc. and TradResults etc, styling to use sheets since they share a lot of styling
 - Probably should order the results on the poll page
 - implement a non-account based cookie user tracking
+- make sure all colors are unique in the bar graphs
+- after creating account, find way to send user back to login page and have it display a success message. Need to figure out how to use the router to add #$vars or whatever they are in the URL, and how to access them from the URL in the component.
+- add code to create default admin account in dbinitializer

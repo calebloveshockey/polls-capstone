@@ -9,43 +9,22 @@ const pool = new Pool({
   connectionString: process.env.POSTGRES_URL + "?sslmode=require",
 });
   
-
-
-export async function createThing() {
-    console.log("Entering createThing");
-  try {
-    const client = await pool.connect();
-
-    // Query the "things" table
-    const { rows } = await client.query("INSERT INTO things (name, fruit) VALUES ('Adam', 'Bonan');");
-    console.log(rows);
-
-    // Close the database connection
-    client.release();
-
-  } catch (error) {
-    console.error('Error creating thing: ', error);
-  }
-};
-
-
-
 // Create new user account
-export async function createAccount(email: string, username: string, password: string) {
-  console.log("Entering createAccount");
+export async function createUserAccount(username: string, password: string) {
+  console.log("Entering createUserAccount");
   try {
     const client = await pool.connect();
 
-    // Ensure email is unique
-    const { rows: emailCheck } = await client.query(`SELECT email FROM users WHERE email=$1`, [email])
-    if (emailCheck.length > 0) {
-      console.log('Email already exists.');
+    // Ensure username is unique
+    const { rows: usernameCheck } = await client.query(`SELECT username FROM users WHERE username=$1`, [username])
+    if (usernameCheck.length > 0) {
+      console.log('Username already exists.');
 
       // Close the database connection
       client.release();
 
-      // Handle the case where the email already exists
-      return "Error: Email already exists.";
+      // Handle the case where the username already exists
+      return "Error: Username already exists.";
 
     }else{
     
@@ -54,11 +33,9 @@ export async function createAccount(email: string, username: string, password: s
 
       // Insert new user into the database using parameterized query
       const { rows: creation } = await client.query(
-        'INSERT INTO users (email, username, passwordhash, type) VALUES ($1, $2, $3, $4)', 
-        [email, username, hashedPassword, "user"]
+        'INSERT INTO users (username, passwordhash, type) VALUES ($1, $2, $3)', 
+        [username, hashedPassword, "user"]
       );
-
-      console.log(creation);
 
       // Close the database connection
       client.release();
@@ -72,6 +49,40 @@ export async function createAccount(email: string, username: string, password: s
   }
 };
 
+
+// Create new anonymous user account
+export async function createAnonAccount(){
+  console.log("Entering createAnonAccount");
+  try {
+    const client = await pool.connect();
+    
+    // Insert new user into the database using parameterized query
+    const {rows: result} = await client.query(
+      'INSERT INTO users (type) VALUES ($1) RETURNING user_id', 
+      ["anon"]
+    );
+
+    console.log(result);
+
+    // Add cookie with key to track anon users
+    const key = uuidv4();
+    await client.query('INSERT INTO keys (user_id, key, datetime_issued) VALUES ($1, $2, NOW())', [result[0].user_id, key]);
+    cookies().set({
+      name: 'key',
+      value: key,
+      httpOnly: true,
+      secure: false,
+    })
+
+    // Close the database connection
+    client.release();
+    return result[0].user_id;
+
+  } catch (error) {
+    console.error('Error creating anon: ', error);
+    return "Error: " + error;
+  }
+}
 
 
 // Login to user account
@@ -100,9 +111,8 @@ export async function login(username: string, password: string) {
       // Passwords match, generate a key
       const key = uuidv4(); 
 
-      // Store the key in the "keys" table in your database
+      // Store the key
       await client.query('INSERT INTO keys (user_id, key, datetime_issued) VALUES ($1, $2, NOW())', [userData[0].user_id, key]);
-
 
       cookies().set({
         name: 'key',
@@ -110,7 +120,6 @@ export async function login(username: string, password: string) {
         httpOnly: true,
         secure: false,
       })
-
 
       // Close the database connection
       client.release();
@@ -125,12 +134,10 @@ export async function login(username: string, password: string) {
 }
 
 
-
-// Validate that user has a valid session key
-export async function validate(){
-  console.log("SERVER: Entering validate");
+// Validate requester has valid key
+export async function validateKey(): Promise<any>{
+  console.log("SERVER: Entering validateKey");
   try {
-
     const client = await pool.connect();
 
     //Check if cookie with name "key" exists
@@ -151,29 +158,68 @@ export async function validate(){
         const sessionExpiryMinutes = sessionExpiryString ? parseInt(sessionExpiryString, 10) : 60;
         sessionExpiryTime.setMinutes(sessionExpiryTime.getMinutes() + sessionExpiryMinutes);
         if (currentTime <= sessionExpiryTime){
-
-          // Session is still valid; fetch corresponding username
-          const {rows: userData} = await client.query('SELECT username FROM users WHERE user_id = $1', [keyInfo.user_id]);
-
-          // Ensure existing user
-          if (userData.length > 0 ){
-            const username = userData[0].username;
-
-            client.release();
-            return {status: 'SUCCESS', username: username}
-          }
+          client.release();
+          return {status: 'SUCCESS', user_id: keyData[0].user_id}
         }
       }
+    }else{
+      // No cookie key, create anonymous account, attempt to validate again
+      await createAnonAccount();
+      client.release();
+      const recursiveValidate = await validateKey();
+      return recursiveValidate;
     }
 
-    // Failed to verify
+    // Failed to validate
     client.release();
-    return {status: 'FAILURE'};
+    return {status: 'FAILURE'}
 
   }
   catch (error) {
     console.error('Error validating: ', error);
     return {status: 'ERROR', error: error};
+  }
+}
+
+
+
+// Validate user account
+export async function validateUser(){
+  console.log("SERVER: Entering validateUser");
+
+  // Check for valid key
+  const keyCheck = await validateKey();
+  if (keyCheck.status === "SUCCESS"){
+    // valid key found
+    try {
+      const client = await pool.connect();
+
+      // Fetch user
+      const {rows: userData} = await client.query('SELECT username, type FROM users WHERE user_id = $1', [keyCheck.user_id]);
+
+      // Ensure existing user account
+      if (userData.length > 0 && userData[0].type === "user"){
+        // User exists
+        const username = userData[0].username;
+        client.release();
+        return {status: 'SUCCESS', username: username}
+
+      }else{
+        // No such user exists
+        client.release();
+        return {status: 'FAILURE'};
+      }
+  
+    }
+    catch (error) {
+      console.error('Error validating user account: ', error);
+      return {status: 'ERROR', error: error};
+    }
+
+  // No valid key found
+  }else{
+    console.error('User does not have a valid key.');
+    return {status: 'FAILURE'};
   }
 }
 
@@ -208,21 +254,20 @@ export async function logout(){
 export async function getUserData(){
 
   // Validate 
-  const validation = await validate();
+  const validation = await validateUser();
 
-  if(validation.status && validation.status === "SUCCESS" && validation.username){
+  if(validation.status === "SUCCESS" && validation.username){
 
     try{
       const client = await pool.connect();
 
-      const {rows: userData} = await client.query('SELECT email, username, type FROM users WHERE username = $1', [validation.username])
+      const {rows: userData} = await client.query('SELECT username, type FROM users WHERE username = $1', [validation.username])
 
       if(userData.length > 0){
         client.release();
         return{
           status: 'SUCCESS',
           username: userData[0].username,
-          email: userData[0].email,
           type: userData[0].type,
         }
       }
@@ -238,7 +283,6 @@ export async function getUserData(){
   return {
     status: "FAILURE", 
     username: "FAILURE",
-    email: "FAILURE",
     type: "FAILURE",
   };
 }
@@ -248,8 +292,8 @@ export async function getUserData(){
 export async function changePassword(oldPass: string, newPass: string){
   console.log("SERVER: entering change password");
 
-  // Validate user token to confirm they are authorized and to get username
-  const validation = await validate();
+  // Validate user to confirm they are authorized and to get username
+  const validation = await validateUser();
   if(validation.status && validation.status === "SUCCESS" && validation.username){
 
     try{
@@ -328,61 +372,57 @@ export async function createPoll(
 ){
   console.log("SERVER: entering create poll");
 
-  // Validate user token to confirm they are authorized and to get username
-  const validation = await validate();
-  if(validation.status && validation.status === "SUCCESS" && validation.username){
+  // Validate key to confirm they are authorized and to get user id
+  const validation = await validateKey();
+  if(validation.status === "SUCCESS" && validation.user_id){
 
     try{
       const client = await pool.connect();
 
-      // Get user id
-      const {rows: userData} = await client.query('SELECT user_id FROM users WHERE username = $1', [validation.username])
-      if (userData.length > 0) {
+      // Genereate unique code for the poll's shareable link
+      const code = await generateUniqueShareCode();
 
-        // Genereate unique code for the poll's shareable link
-        const code = await generateUniqueShareCode();
+      try{
 
-        try{
+        // Begin transaction to add the poll and all its options
+        await client.query('BEGIN');
 
-          // Begin transaction to add the poll and all its options
-          await client.query('BEGIN');
+        // Add data to poll table, and get back the resulting new poll_id
+        const result = await client.query(
+          'INSERT INTO polls (question, description, type, create_date, close_date, share_link, author) VALUES ($1, $2, $3, NOW(), $4, $5, $6) RETURNING poll_id', 
+          [
+            questionText,
+            descText,
+            pollType,
+            endTime,
+            code,
+            validation.user_id, 
+          ]
+        );
+        if(result.rowCount === 1){
+          const newPollId = result.rows[0].poll_id;
 
-          // Add data to poll table, and get back the resulting new poll_id
-          const result = await client.query(
-            'INSERT INTO polls (question, description, type, create_date, close_date, share_link, author) VALUES ($1, $2, $3, NOW(), $4, $5, $6) RETURNING poll_id', 
-            [
-              questionText,
-              descText,
-              pollType,
-              endTime,
-              code,
-              userData[0].user_id, 
-            ]
-          );
-          if(result.rowCount === 1){
-            const newPollId = result.rows[0].poll_id;
-
-            // Insert options with the new poll_id to the options table
-            for (const opt of options) {
-              await client.query('INSERT INTO options (option_name, poll_id) VALUES ($1, $2)', [opt, newPollId]);
-            }
-
-            // Commit the transaction now that poll and all options have been inserted
-            await client.query('COMMIT');
-            console.log('Transaction committed successfully');
-
-            return{status: "SUCCESS", shareCode: code};
+          // Insert options with the new poll_id to the options table
+          for (const opt of options) {
+            await client.query('INSERT INTO options (option_name, poll_id) VALUES ($1, $2)', [opt, newPollId]);
           }
 
-        } catch (error) {
-          // If any operation fails, roll back the transaction
-          await client.query('ROLLBACK');
-          console.error('Error in transaction:', error);
-        } finally {
-          // Release the client back to the pool
-          client.release();
+          // Commit the transaction now that poll and all options have been inserted
+          await client.query('COMMIT');
+          console.log('Transaction committed successfully');
+
+          return{status: "SUCCESS", shareCode: code};
         }
+
+      } catch (error) {
+        // If any operation fails, roll back the transaction
+        await client.query('ROLLBACK');
+        console.error('Error in transaction:', error);
+      } finally {
+        // Release the client back to the pool
+        client.release();
       }
+      
 
       client.release();
     }
@@ -460,81 +500,40 @@ export async function getPollData(shareCode: string){
 
 
 // Cast vote on a poll
-export async function castVote(poll_id: string, option_id: string, fakeUserId: number){
+export async function castVote(poll_id: string, option_id: string){
   console.log("SERVER: entering cast vote");
 
-  // Check for user/validate
-  const validation = await validate();
-  if(validation.status && validation.status === "SUCCESS" && validation.username){
-
-    // vote with a userid
+  // Validate key to confirm they are authorized and to get user id
+  const validation = await validateKey();
+  if(validation.status === "SUCCESS" && validation.user_id){
     try{
+      // Cast the vote
       const client = await pool.connect();
-      
-      // Get user id
-      const {rows: userData} = await client.query('SELECT user_id FROM users WHERE username = $1', [validation.username])
-      if (userData.length > 0) {
-
-        const result = await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, userData[0].user_id]);
-        client.release();
-        return({status: "SUCCESS"});
-      }
+      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, validation.user_id]);
       client.release();
-    }catch(error){
-      console.log("Error voting: " + error);
-    }
-  }else{
-    //vote without a userid
-
-    try{
-      const client = await pool.connect();
+      return({status: "SUCCESS"});
       
-      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, fakeUserId]);
-      client.release();
-      return({status: "SUCCESS"}); 
-
     }catch(error){
       console.log("Error voting: " + error);
     }
   }
-
   return{status: "FAILURE"};
 }
 
-// Cast vote on a poll
-export async function castRankedVote(poll_id: string, option_id: string, ranking: number, fakeUserId: number){
+// Cast vote on a ranked poll
+export async function castRankedVote(poll_id: string, option_id: string, ranking: number){
   console.log("SERVER: entering cast vote");
 
-  // Check for user/validate
-  const validation = await validate();
-  if(validation.status && validation.status === "SUCCESS" && validation.username){
-
-    // vote with a userid
+  // Validate key to confirm they are authorized and to get user id
+  const validation = await validateKey();
+  if(validation.status === "SUCCESS" && validation.user_id){
     try{
+      // Cast the vote
       const client = await pool.connect();
-      
-      // Get user id
-      const {rows: userData} = await client.query('SELECT user_id FROM users WHERE username = $1', [validation.username])
-      if (userData.length > 0) {
-
-        const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, userData[0].user_id, ranking]);
-        client.release();
-        return({status: "SUCCESS"});
-      }
+      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, validation.user_id, ranking]);
       client.release();
-    }catch(error){
-      console.log("Error voting: " + error);
-    }
-  }else{
-    //vote without a userid
-
-    try{
-      const client = await pool.connect();
+      return({status: "SUCCESS"});
       
-      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, fakeUserId, ranking]);
-      client.release();
-      return({status: "SUCCESS"}); 
-
     }catch(error){
       console.log("Error voting: " + error);
     }

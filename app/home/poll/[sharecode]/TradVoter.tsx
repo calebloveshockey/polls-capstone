@@ -63,9 +63,7 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
     const vote = async () => {
         console.log("Casting vote");
 
-        //in case vote without a userid
-        const fakeUserId =  Math.floor((Math.random() * 1000000000));
-        const res = await castVote(pollData.poll_id, selectedOption, fakeUserId);
+        const res = await castVote(pollData.poll_id, selectedOption);
 
         if(res.status === "SUCCESS"){
             // Move to results page
