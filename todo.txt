@@ -24,3 +24,6 @@
 - make sure all colors are unique in the bar graphs
 - after creating account, find way to send user back to login page and have it display a success message. Need to figure out how to use the router to add #$vars or whatever they are in the URL, and how to access them from the URL in the component.
 - add code to create default admin account in dbinitializer
+- look into adding secure and samesite to cookie key
+- block users from voting twice
+- redirect users from My Account page if they don't actually have a user account.

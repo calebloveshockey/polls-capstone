@@ -11,14 +11,14 @@ const pool = new Pool({
   
 // Create new user account
 export async function createUserAccount(username: string, password: string) {
-  console.log("Entering createUserAccount");
+  console.log("SERVER: Entering createUserAccount");
   try {
     const client = await pool.connect();
 
     // Ensure username is unique
     const { rows: usernameCheck } = await client.query(`SELECT username FROM users WHERE username=$1`, [username])
     if (usernameCheck.length > 0) {
-      console.log('Username already exists.');
+      console.log('SERVER: Username already exists.');
 
       // Close the database connection
       client.release();
@@ -44,7 +44,7 @@ export async function createUserAccount(username: string, password: string) {
     }
 
   } catch (error) {
-    console.error('Error creating user: ', error);
+    console.error('SERVER: Error creating user: ', error);
     return "Error: " + error;
   }
 };
@@ -52,7 +52,7 @@ export async function createUserAccount(username: string, password: string) {
 
 // Create new anonymous user account
 export async function createAnonAccount(){
-  console.log("Entering createAnonAccount");
+  console.log("SERVER: Entering createAnonAccount");
   try {
     const client = await pool.connect();
     
@@ -61,8 +61,6 @@ export async function createAnonAccount(){
       'INSERT INTO users (type) VALUES ($1) RETURNING user_id', 
       ["anon"]
     );
-
-    console.log(result);
 
     // Add cookie with key to track anon users
     const key = uuidv4();
@@ -74,12 +72,12 @@ export async function createAnonAccount(){
       secure: false,
     })
 
-    // Close the database connection
+    // Close the database connection and return the new anon user id
     client.release();
     return result[0].user_id;
 
   } catch (error) {
-    console.error('Error creating anon: ', error);
+    console.error('SERVER: Error creating anon: ', error);
     return "Error: " + error;
   }
 }
@@ -157,17 +155,40 @@ export async function validateKey(): Promise<any>{
         const sessionExpiryString = process.env.SESSION_EXPIRY_MINS;
         const sessionExpiryMinutes = sessionExpiryString ? parseInt(sessionExpiryString, 10) : 60;
         sessionExpiryTime.setMinutes(sessionExpiryTime.getMinutes() + sessionExpiryMinutes);
+
         if (currentTime <= sessionExpiryTime){
+          // Key exists and is valid
           client.release();
+          console.log("SERVER: Key validated successfully.");
           return {status: 'SUCCESS', user_id: keyData[0].user_id}
+
+        }else{
+          // Cookie exists and is in db, but it is expired
+          console.log("SERVER: Key found, but it is expired.");
+          client.release();
+          // Delete cookie and revalidate
+          cookies().delete('key');
+          const revalidate = await validateKey();
+          return revalidate;
         }
+
+      }else{
+        // Cookie named key exists, but it doesn't match any in the database
+        console.log("SERVER: Cookie found, but doesn't exist in the database.");
+        client.release();
+        // Delete cookie and revalidate
+        cookies().delete('key');
+        const revalidate = await validateKey();
+        return revalidate;
       }
+
     }else{
       // No cookie key, create anonymous account, attempt to validate again
+      console.log("SERVER: No cookie, create anon account");
       await createAnonAccount();
       client.release();
-      const recursiveValidate = await validateKey();
-      return recursiveValidate;
+      const revalidate = await validateKey();
+      return revalidate;
     }
 
     // Failed to validate
@@ -176,7 +197,7 @@ export async function validateKey(): Promise<any>{
 
   }
   catch (error) {
-    console.error('Error validating: ', error);
+    console.error('SERVER: Error validating key: ', error);
     return {status: 'ERROR', error: error};
   }
 }
@@ -200,25 +221,27 @@ export async function validateUser(){
       // Ensure existing user account
       if (userData.length > 0 && userData[0].type === "user"){
         // User exists
+        console.log("SERVER: User exists and is valid");
         const username = userData[0].username;
         client.release();
         return {status: 'SUCCESS', username: username}
 
       }else{
         // No such user exists
+        console.log("SERVER: No such user exists.");
         client.release();
         return {status: 'FAILURE'};
       }
   
     }
     catch (error) {
-      console.error('Error validating user account: ', error);
+      console.error('SERVER: Error validating user account: ', error);
       return {status: 'ERROR', error: error};
     }
 
   // No valid key found
   }else{
-    console.error('User does not have a valid key.');
+    console.error('SERVER: User does not have a valid key.');
     return {status: 'FAILURE'};
   }
 }
@@ -242,7 +265,7 @@ export async function logout(){
     client.release();
   }
   catch (error) {
-    console.error('Error logging out: ', error);
+    console.error('SERVER: Error logging out: ', error);
   }
 
   cookies().delete("key");
@@ -276,7 +299,7 @@ export async function getUserData(){
       client.release();
     }
     catch(error){
-      console.log('Error getting use data: ', error);
+      console.log('SERVER: Error getting use data: ', error);
     }
   }
 
@@ -323,7 +346,7 @@ export async function changePassword(oldPass: string, newPass: string){
       client.release();
     }
     catch(error){
-      console.log('Error getting use data: ', error);
+      console.log('SERVER: Error getting use data: ', error);
     }
   }
 
@@ -356,7 +379,7 @@ async function generateUniqueShareCode(): Promise<string> {
     }
 
   }catch(error){
-    console.log("ERROR: generating unique share code: " + error);
+    console.error("SERVER: Error generating unique share code: " + error);
   }
 
   return generateUniqueShareCode();
@@ -409,7 +432,7 @@ export async function createPoll(
 
           // Commit the transaction now that poll and all options have been inserted
           await client.query('COMMIT');
-          console.log('Transaction committed successfully');
+          console.log('SERVER: Transaction committed successfully');
 
           return{status: "SUCCESS", shareCode: code};
         }
@@ -417,7 +440,7 @@ export async function createPoll(
       } catch (error) {
         // If any operation fails, roll back the transaction
         await client.query('ROLLBACK');
-        console.error('Error in transaction:', error);
+        console.error('SERVER: Error in transaction:', error);
       } finally {
         // Release the client back to the pool
         client.release();
@@ -427,7 +450,7 @@ export async function createPoll(
       client.release();
     }
     catch(error){
-      console.log('Error creating poll: ', error);
+      console.log('SERVER: Error creating poll: ', error);
     }
   }
 
@@ -454,7 +477,7 @@ export async function getPollType(shareCode: string){
 
     client.release();
   }catch(error){
-    console.log("Error retrieving poll data: " + error);
+    console.log("SERVER: Error retrieving poll data: " + error);
   }
 
 
@@ -487,7 +510,7 @@ export async function getPollData(shareCode: string){
 
     client.release();
   }catch(error){
-    console.log("Error retrieving poll data: " + error);
+    console.log("SERVER: Error retrieving poll data: " + error);
   }
 
 
@@ -514,7 +537,7 @@ export async function castVote(poll_id: string, option_id: string){
       return({status: "SUCCESS"});
       
     }catch(error){
-      console.log("Error voting: " + error);
+      console.log("SERVER: Error voting: " + error);
     }
   }
   return{status: "FAILURE"};
@@ -535,7 +558,7 @@ export async function castRankedVote(poll_id: string, option_id: string, ranking
       return({status: "SUCCESS"});
       
     }catch(error){
-      console.log("Error voting: " + error);
+      console.log("SERVER: Error voting: " + error);
     }
   }
 
@@ -592,7 +615,7 @@ export async function getTradVotes(shareCode: string){
     client.release();
     return [{option_name: "None", numVotes: 0, votePercentage: 0}];
   }catch(error){
-    console.log("Error voting: " + error);
+    console.log("SERVER: Error voting: " + error);
   }            
 
 
@@ -656,7 +679,7 @@ export async function getApprovalVotes(shareCode: string){
     client.release();
     return {voters: 0, votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]};
   }catch(error){
-    console.log("Error voting: " + error);
+    console.log("SERVER: Error voting: " + error);
   }            
 
 
@@ -715,7 +738,7 @@ export async function getRankedVotes(shareCode: string){
     client.release();
     return [{option_name: "None", numVotes: 0, votePercentage: 0}];
   }catch(error){
-    console.log("Error voting: " + error);
+    console.log("SERVER: Error voting: " + error);
   }            
 
 
