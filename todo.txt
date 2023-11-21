@@ -37,6 +37,7 @@
 - eventually add suspense boundaries for dynamic and smooth loading
 - add question text to top of results
 - On the results page highlight which options were selected by current user.
+- handle edge case of viewing poll results with no votes
 
 
 http://localhost:3000/home/poll/o48fn

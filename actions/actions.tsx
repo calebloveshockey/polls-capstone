@@ -234,7 +234,7 @@ export async function validateUser(){
         console.log("SERVER: User exists and is valid");
         const username = userData[0].username;
         client.release();
-        return {status: 'SUCCESS', username: username}
+        return {status: 'SUCCESS', username: username, user_id: keyCheck.user_id}
 
       }else{
         // No such user exists
@@ -973,4 +973,92 @@ function instantRunoff(ivr: {
     optionsData: newOptionsData,
     votes: newVotes
   });
+}
+
+
+// Get all comments for a particular poll
+export async function getComments(shareCode: string){
+  console.log("SERVER: entering getComments");
+
+  try{
+    const client = await pool.connect();
+
+    // Validate that user has an account
+    const validation = await validateUser();
+
+    if(validation.status === "SUCCESS"){
+      // Get poll id
+      const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
+      if(pollData.length === 1){
+
+        // Get all comments for this poll
+        const { rows: comments } = await client.query(
+          `SELECT c.comment_id, c.date, c.comment_text, u.username, c.parent_comment
+          FROM comments c
+          JOIN users u ON c.user_id = u.user_id
+          WHERE c.poll_id = $1`,
+          [pollData[0].poll_id]
+        );
+
+        console.log("SERVER: comments object: ");
+        console.log(comments);
+        
+        client.release();
+        return {status: "SUCCESS", comments: comments};
+      }
+    }
+
+    // User does not have an account
+    client.release();
+    return{
+      status: "NOUSER",
+      comments: []
+    }
+  }catch(error){
+    console.log("SERVER: Error retrieving poll data: " + error);
+  }
+
+  return{
+    status: "FAILURE",
+    comments: [],
+  }
+}
+
+
+// Add new comment
+export async function addComment(shareCode: string, newComment: string, replyingCommentId: number|null){
+  console.log("SERVER: entering addComment");
+
+  try{
+    const client = await pool.connect();
+
+    // Validate that user has an account
+    const validation = await validateUser();
+
+    if(validation.status === "SUCCESS"){
+      // Get poll id
+      const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
+      if(pollData.length === 1){
+
+        // Add comment to database
+        if(replyingCommentId === null){
+          // Add comment without parent_id
+          await client.query("INSERT INTO comments (date, comment_text, user_id, poll_id) VALUES (NOW(), $1, $2, $3)", [newComment, validation.user_id, pollData[0].poll_id]);
+        }else{
+          // Add comment with parent_id
+          await client.query("INSERT INTO comments (date, comment_text, user_id, poll_id, parent_comment) VALUES (NOW(), $1, $2, $3, $4)", [newComment, validation.user_id, pollData[0].poll_id, replyingCommentId]);
+        }
+        
+        client.release();
+        return {status: "SUCCESS"};
+      }
+    }
+
+    // User does not have an account
+    client.release();
+  }catch(error){
+    console.log("SERVER: Error retrieving poll data: " + error);
+  }
+
+  return{status: "FAILURE"}
 }

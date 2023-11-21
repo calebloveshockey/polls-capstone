@@ -14,11 +14,13 @@ import RankedResults from './RankedResults';
 import ApprovalResults from './ApprovalResults';
 import Discussion from '@/components/Discussion';
 
+
 interface ShowVoteProps {
     shareCode: string;
 }
 
 export default function ShowVotes({ shareCode }: ShowVoteProps) {
+    const router = useRouter();
 
     const [pollType, setPollType] = useState("");
 
@@ -43,12 +45,48 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
         fetchData();
     }, []);
 
+    const copyUrlToClipboard = () => {
+        const currentUrl = window.location.href; // Get the current URL
+        navigator.clipboard.writeText(currentUrl) // Copy the URL to clipboard
+          .then(() => {
+            // Handle success (e.g., show a success message)
+            console.log('URL copied to clipboard:', currentUrl);
+          })
+          .catch((error) => {
+            // Handle error (e.g., show an error message)
+            console.error('Error copying URL to clipboard:', error);
+          });
+      };
+
 
     return (
         <>
                 {pollType === "Traditional" &&  <TradResults shareCode={shareCode}/> }
                 {pollType === "Ranked" && <RankedResults shareCode={shareCode}/>}
                 {pollType === "Approval" && <ApprovalResults shareCode={shareCode}/>}
+
+                <Box sx={{
+                    display: 'flex',
+                }}>
+                    <TextField
+                        sx={{
+                            marginTop: "40px",
+                        }}
+                        fullWidth
+                        label="Share the poll"
+                        variant="outlined"
+                        value={window.location.href}
+                        InputProps={{
+                            readOnly: true, // Make the input read-only
+                            endAdornment: (
+                            <InputAdornment position="end">
+                                {/* Add a button to copy the URL to clipboard */}
+                                <Button onClick={copyUrlToClipboard}>Copy</Button>
+                            </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Box>
 
                 <Box sx={{
                     borderTop: '2px solid black',

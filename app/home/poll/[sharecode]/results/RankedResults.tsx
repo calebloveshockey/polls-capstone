@@ -123,8 +123,6 @@ export default function RankedResults({ shareCode }: ShowVoteProps) {
                 <div>Data is not available.</div>
             </>
         }
-
-
         </>
     );
 }
