@@ -4,7 +4,7 @@ import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getUserData} from '@/actions/actions';
+import { castTradVote, getPollData, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
@@ -30,6 +30,8 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
 
     const [selectedOption, setSelectedOption] = useState("default");
 
+    const [error, setError] = useState<string | null>(null);
+
 
     // Retrieve poll data
     useEffect( () => {
@@ -48,6 +50,7 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
                 }
 
             } catch (error) {
+                setError(JSON.stringify(error));
                 console.error('Error retrieving poll data:', error);
             }
         };
@@ -63,13 +66,15 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
     const vote = async () => {
         console.log("Casting vote");
 
-        const res = await castVote(pollData.poll_id, selectedOption);
+        const res = await castTradVote(pollData.poll_id, selectedOption);
 
         if(res.status === "SUCCESS"){
             // Move to results page
             goToResults();
+        }else if(res.status === "ERROR" && res.error){
+            setError(res.error);
         }else{
-            console.log("voting failed");
+            setError("Vote failed to cast.");
         }
 
     };
@@ -122,23 +127,21 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
                 </Box>
 
                 <Box sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
+                    color: 'red',
+                    fontWeight: 'bold',
                 }}>
+                    {error ? error : ""}
+                </Box>
+
+                <Box className={styles.bottomButtonContainer}>
                     <Button
-                        sx={{
-                            marginTop: "40px",
-                            fontSize: "20px",
-                        }}
+                        className={styles.bottomButton}
                         onClick={vote}
                         variant="contained"
                     >Vote</Button>
 
                     <Button
-                        sx={{
-                            marginTop: "40px",
-                            fontSize: "20px",
-                        }}
+                        className={styles.bottomButton}
                         onClick={goToResults}
                         variant="contained"
                     >View Results</Button>                  

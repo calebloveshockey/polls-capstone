@@ -140,7 +140,7 @@ export async function validateKey(): Promise<any>{
 
     //Check if cookie with name "key" exists
     const sessionKey = cookies().get('key');
-    if(sessionKey){
+    if(sessionKey && sessionKey.value !== "poison"){
 
       // Fetch corresponding key from the keys table
       const {rows: keyData} = await client.query('SELECT user_id, datetime_issued FROM keys WHERE key = $1', [sessionKey.value]);
@@ -167,7 +167,12 @@ export async function validateKey(): Promise<any>{
           console.log("SERVER: Key found, but it is expired.");
           client.release();
           // Delete cookie and revalidate
-          cookies().delete('key');
+          cookies().set({
+            name: 'key',
+            value: "poison",
+            httpOnly: true,
+            secure: false,
+          });
           const revalidate = await validateKey();
           return revalidate;
         }
@@ -177,7 +182,12 @@ export async function validateKey(): Promise<any>{
         console.log("SERVER: Cookie found, but doesn't exist in the database.");
         client.release();
         // Delete cookie and revalidate
-        cookies().delete('key');
+        cookies().set({
+          name: 'key',
+          value: "poison",
+          httpOnly: true,
+          secure: false,
+        });
         const revalidate = await validateKey();
         return revalidate;
       }
@@ -522,19 +532,30 @@ export async function getPollData(shareCode: string){
 }
 
 
-// Cast vote on a poll
-export async function castVote(poll_id: string, option_id: string){
-  console.log("SERVER: entering cast vote");
+// Cast vote on a traditional poll
+export async function castTradVote(poll_id: string, option_id: string){
+  console.log("SERVER: entering castTradVote");
 
   // Validate key to confirm they are authorized and to get user id
   const validation = await validateKey();
   if(validation.status === "SUCCESS" && validation.user_id){
+
     try{
-      // Cast the vote
       const client = await pool.connect();
-      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, validation.user_id]);
-      client.release();
-      return({status: "SUCCESS"});
+
+      // Check if user has already voted in this poll
+      const {rows: checkForVotes} = await client.query('SELECT response_id FROM responses WHERE poll_id = $1 AND responder = $2', [poll_id, validation.user_id]);
+      if(checkForVotes.length > 0){
+        // Already voted in this poll
+        client.release();
+        return({status: "ERROR", error: "Cannot vote in the same poll twice."});
+
+      }else{
+        // Haven't voted before; Cast the vote
+        await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, validation.user_id]);
+        client.release();
+        return({status: "SUCCESS"});
+      }
       
     }catch(error){
       console.log("SERVER: Error voting: " + error);
@@ -545,23 +566,65 @@ export async function castVote(poll_id: string, option_id: string){
 
 // Cast vote on a ranked poll
 export async function castRankedVote(poll_id: string, option_id: string, ranking: number){
-  console.log("SERVER: entering cast vote");
+  console.log("SERVER: entering castRankedVote");
 
   // Validate key to confirm they are authorized and to get user id
   const validation = await validateKey();
   if(validation.status === "SUCCESS" && validation.user_id){
     try{
-      // Cast the vote
       const client = await pool.connect();
-      const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, validation.user_id, ranking]);
-      client.release();
-      return({status: "SUCCESS"});
+
+      // Check if user has already voted in this poll for this ranking number
+      const {rows: checkForVotes} = await client.query('SELECT response_id FROM responses WHERE poll_id = $1 AND responder = $2 AND rank = $3', [poll_id, validation.user_id, ranking]);
+      if(checkForVotes.length > 0){
+        // Already voted in this poll for this ranking number
+        client.release();
+        return({status: "ERROR", error: "Cannot vote in the same poll twice."});
+
+      }else{
+        // Have not voted before, cast the vote;
+        const result = await client.query('INSERT INTO responses (poll_id, option_id, responder, rank) VALUES ($1, $2, $3, $4)', [poll_id, option_id, validation.user_id, ranking]);
+        client.release();
+        return({status: "SUCCESS"});
+        }
       
     }catch(error){
       console.log("SERVER: Error voting: " + error);
     }
   }
 
+  return{status: "FAILURE"};
+}
+
+// Cast vote on a traditional poll
+export async function castApprovalVote(poll_id: string, option_id: string){
+  console.log("SERVER: entering castApprovalVote");
+
+  // Validate key to confirm they are authorized and to get user id
+  const validation = await validateKey();
+  if(validation.status === "SUCCESS" && validation.user_id){
+
+    try{
+      const client = await pool.connect();
+
+      // Check if user has already voted in this poll for this option
+      const {rows: checkForVotes} = await client.query('SELECT response_id FROM responses WHERE poll_id = $1 AND responder = $2 AND option_id = $3', [poll_id, validation.user_id, option_id]);
+      if(checkForVotes.length > 0){
+        // Already voted in this poll for this option
+        client.release();
+        return({status: "ERROR", error: "Cannot vote in the same poll twice."});
+
+      }else{
+        // Haven't voted before; Cast the vote
+        await client.query('INSERT INTO responses (poll_id, option_id, responder) VALUES ($1, $2, $3)', [poll_id, option_id, validation.user_id]);
+        client.release();
+        return({status: "SUCCESS"});
+      }
+      
+    }catch(error){
+      console.log("SERVER: Error voting: " + error);
+    }
+  }
   return{status: "FAILURE"};
 }
 
@@ -574,7 +637,7 @@ export async function getTradVotes(shareCode: string){
     const client = await pool.connect();
 
     // Get poll id
-    const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
+    const {rows: pollData} = await client.query("SELECT poll_id, question, description FROM polls WHERE share_link = $1", [shareCode]);
 
     if(pollData.length === 1){
     
@@ -608,18 +671,30 @@ export async function getTradVotes(shareCode: string){
 
       client.release();
       const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(optionVotes);
-      return genericOptionVotes;
+      return {
+        question: pollData[0].question,
+        description: pollData[0].description,
+        votes: genericOptionVotes
+      }
 
     }
 
     client.release();
-    return [{option_name: "None", numVotes: 0, votePercentage: 0}];
+    return {
+      question: "",
+      description: "",
+      votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]
+    }
   }catch(error){
     console.log("SERVER: Error voting: " + error);
   }            
 
 
-return [{option_name: "None", numVotes: 0, votePercentage: 0}];
+  return {
+    question: "",
+    description: "",
+    votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]
+  }
 
 }
 
@@ -627,13 +702,11 @@ return [{option_name: "None", numVotes: 0, votePercentage: 0}];
 // Get all votes for an approval poll
 export async function getApprovalVotes(shareCode: string){
   console.log("SERVER: Entering get approval votes");
-
   try{
     const client = await pool.connect();
 
     // Get poll id
-    const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
-
+    const {rows: pollData} = await client.query("SELECT poll_id, question, description FROM polls WHERE share_link = $1", [shareCode]);
     if(pollData.length === 1){
     
       // Get all votes for this poll_id
@@ -641,6 +714,8 @@ export async function getApprovalVotes(shareCode: string){
 
       // Get all options
       const {rows: optionsData} = await client.query("SELECT option_id, option_name FROM options WHERE poll_id = $1", [pollData[0].poll_id]);
+      
+      // Initialize data object with the options
       const optionVotes : {option_name : string, numVotes: number, votePercentage: number}[] = optionsData.reduce( (acc, option) => {
         acc[option.option_id] = {
           option_name: option.option_name,
@@ -650,12 +725,8 @@ export async function getApprovalVotes(shareCode: string){
         return acc;
       }, {});
 
-
       // Tabulate votes for each option
-      voteData.forEach((vote) => {
-        const optionId = vote.option_id;
-        optionVotes[optionId].numVotes++;
-      });
+      voteData.forEach((vote) => {optionVotes[vote.option_id].numVotes++});
 
       // Calculate total votes
       const totalVotes = Object.values(optionVotes).reduce((total : number, option) => total + option.numVotes, 0);
@@ -663,85 +734,243 @@ export async function getApprovalVotes(shareCode: string){
       //Tabulate number of unique voters
       const numUniqueVoters = new Set(voteData.map(vote => vote.responder)).size;
 
-
-      // Calculate and set vote percentages 
-      // CHATGPT WORK: change this to calculate what percentage of unique voters voted for each option, not based on total votes cast
+      // Calculate and set vote percentages (what percent of voters voted for that option)
       Object.values(optionVotes).forEach((option) => {
         option.votePercentage = +((option.numVotes / numUniqueVoters) * 100).toFixed(1);
       });
 
       client.release();
       const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(optionVotes);
-      return {voters: numUniqueVoters, votes: genericOptionVotes};
-
+      return {
+        question: pollData[0].question,
+        description: pollData[0].description,
+        voters: numUniqueVoters, 
+        votes: genericOptionVotes
+      };
     }
 
     client.release();
-    return {voters: 0, votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]};
+    return {
+      question: "",
+      description: "",
+      voters: 0, 
+      votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]
+    };
   }catch(error){
     console.log("SERVER: Error voting: " + error);
   }            
 
 
-return {voters: 0, votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]};
-
+  return {
+    question: "",
+    description: "",
+    voters: 0, 
+    votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]
+  };
 }
 
 
 
-// Get all votes for a traditional poll
+// Calculate results for a ranked poll
 export async function getRankedVotes(shareCode: string){
-  console.log("SERVER: Entering get trad votes");
-
+  console.log("SERVER: Entering getRankedVotes");
   try{
     const client = await pool.connect();
 
     // Get poll id
-    const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
-
+    const {rows: pollData} = await client.query("SELECT poll_id, question, description FROM polls WHERE share_link = $1", [shareCode]);
     if(pollData.length === 1){
     
       // Get all votes for this poll_id
-      const {rows: voteData} = await client.query('SELECT option_id FROM responses WHERE poll_id = $1', [pollData[0].poll_id]);
+      const {rows: voteData} = await client.query('SELECT option_id, rank, responder FROM responses WHERE poll_id = $1', [pollData[0].poll_id]);
 
       // Get all options
       const {rows: optionsData} = await client.query("SELECT option_id, option_name FROM options WHERE poll_id = $1", [pollData[0].poll_id]);
-      const optionVotes : {option_name : string, numVotes: number, votePercentage: number}[] = optionsData.reduce( (acc, option) => {
-        acc[option.option_id] = {
+      client.release();
+
+      const optionVotes : {option_id : number, option_name : string, numVotes: number, votePercentage: number, eliminated: boolean}[] = optionsData.map( (option) => {
+        return {
+          option_id: option.option_id,
           option_name: option.option_name,
           numVotes: 0,
-          votePercentage: 0
-        };
-        return acc;
-      }, {});
+          votePercentage: 0,
+          eliminated: false,
+        }
+      })
 
-      // Tabulate votes for each option
+      //Tabulate number of unique voters
+      const numUniqueVoters = new Set(voteData.map(vote => vote.responder)).size;
+
+      // Initial voting round
       voteData.forEach((vote) => {
-        const optionId = vote.option_id;
-        optionVotes[optionId].numVotes++;
+        if(vote.rank === 1){
+          // Find option with matching option_id and increment its numVotes
+          const matchingOption = optionVotes.find((option) => option.option_id === vote.option_id);
+          if(matchingOption){
+            matchingOption.numVotes++;
+          }
+        }
       });
-
-      // Calculate total votes
-      const totalVotes = Object.values(optionVotes).reduce((total : number, option) => total + option.numVotes, 0);
 
       // Calculate and set vote percentages
-      Object.values(optionVotes).forEach((option) => {
-        option.votePercentage = +((option.numVotes / totalVotes) * 100).toFixed(1);
+      optionVotes.forEach((option) => {
+        option.votePercentage = +((option.numVotes / numUniqueVoters) * 100).toFixed(1);
       });
 
-      client.release();
-      const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(optionVotes);
-      return genericOptionVotes;
+      // Perform instant voter runoff calculations
+      const ivrResult = instantRunoff({round: 1, optionsData: optionVotes, votes: voteData});
 
+      // Process ivrResult into outputted data
+      const genericOptionVotes : {option_name: string, numVotes: number, votePercentage: number}[] = Object.values(ivrResult.optionsData);
+      console.log("SERVER: Instant Runoff complete.");
+      return {
+        question: pollData[0].question,
+        description: pollData[0].description,
+        voters: numUniqueVoters, 
+        votes: genericOptionVotes, 
+        rounds: ivrResult.round
+      };
     }
 
     client.release();
-    return [{option_name: "None", numVotes: 0, votePercentage: 0}];
+    return {
+      question: "",
+      description: "",
+      voters: 0, 
+      votes: [{option_name: "None", numVotes: 0, votePercentage: 0}], 
+      rounds: 0
+    };
+
   }catch(error){
-    console.log("SERVER: Error voting: " + error);
+    console.log("SERVER: Error getting ranked voting results: " + error);
   }            
 
+  return {
+    question: "",
+    description: "",
+    voters: 0, 
+    votes: [{option_name: "None", numVotes: 0, votePercentage: 0}], 
+    rounds: 0
+  };
+}
 
-return [{option_name: "None", numVotes: 0, votePercentage: 0}];
 
+
+// Recursive function that handles rounds of Instant Runoff Voting
+function instantRunoff(ivr: {
+  round: number, 
+  optionsData: {option_id: number, option_name : string, numVotes: number, votePercentage: number, eliminated: boolean}[],
+  votes: {option_id: number, rank: number, responder: string}[]
+}): {
+  round: number, 
+  optionsData: {option_id: number, option_name : string, numVotes: number, votePercentage: number, eliminated: boolean}[],
+  votes: {option_id: number, rank: number, responder: string}[]
+}{
+
+  console.log("\n------------- Running round of IVR -------------");
+  console.log(ivr);
+
+  // Check if any option has votePercentage of 50% or greater
+  let thresholdReached = false;
+  ivr.optionsData.forEach((option) => {
+    if(option.votePercentage >= 50){
+      console.log(`Option "${option.option_name}" has reached the threshold.`);
+      thresholdReached = true;
+    }
+  });
+  if(thresholdReached){
+    return ivr;
+  }
+
+  // No winning option was found, need to run round of ivr, then recurse.
+  console.log("No winning option found.");
+
+  if(ivr.round > ivr.optionsData.length){
+    console.log("Somehow the ivr failed to resolve.");
+    return ivr;
+  }
+
+  // 1. Find option to eliminate
+  var leastPopularOption = {option_id: 0, numVotes: 0}
+  // Go through each option and find option with least amount of votes which isn't already eliminated
+  ivr.optionsData.forEach((option) => {
+
+    // Initialize leastPopularOption with first non-eliminated option
+    if(leastPopularOption.option_id === 0){
+      //leastPopularOption not initialized, check if this option is not eliminated
+      if(!option.eliminated){
+        // Not eliminated, initalize leastPopularOption
+        leastPopularOption = {option_id: option.option_id, numVotes: option.numVotes};
+      }
+
+    }else{
+      //leastPopularOption initialized
+      // Check if this option isn't eliminated but has less votes than current leastPopularOption
+      if(option.numVotes < leastPopularOption.numVotes && !option.eliminated){
+        // Less popular option found
+        leastPopularOption = {option_id: option.option_id, numVotes: option.numVotes};
+      }
+    }
+  });
+  console.log("Least popular option found: ");
+  console.log(ivr.optionsData.find((option) => option.option_id === leastPopularOption.option_id));
+ 
+
+  // 2. Eliminate option and remove all votes for this option.
+  // Copy optionsData array, but reset the votes and percentage
+  var newOptionsData = ivr.optionsData.map((option) => {
+    return {
+      option_id: option.option_id,
+      option_name: option.option_name,
+      numVotes: 0,
+      votePercentage: 0,
+      eliminated: option.eliminated
+    }
+  });
+  // Eliminate least popular option
+  const leastPop = newOptionsData.find((option) => option.option_id === leastPopularOption.option_id);
+  if(leastPop){
+    leastPop.eliminated = true;
+  }
+  const newVotes = ivr.votes.filter((vote) => {
+    return vote.option_id !== leastPopularOption.option_id;
+  });
+
+  // 3. Retabulate the votes
+  //  3a. Create array of votes that are only the highest ranked option for each responder (using newVotes array, each vote has vote.rank, 1 is highest rank)
+  var topRankVotes = newVotes.reduce((accumulator, vote) => {
+    const existingVote = accumulator.find((v) => v.responder === vote.responder);
+    if (!existingVote || vote.rank < existingVote.rank) {
+      // Replace or add the vote if it's the highest-ranked so far
+      if (existingVote) {
+        accumulator.splice(accumulator.indexOf(existingVote), 1);
+      }
+      accumulator.push(vote);
+    }
+    return accumulator;
+  }, [] as {option_id: number; rank: number; responder: string }[]);
+  console.log("Just top ranked votes: ");
+  console.log(topRankVotes);
+  //  3b. Tabulate just the top ranked votes
+  topRankVotes.forEach((vote) => {
+    const matchingOption = newOptionsData.find((option) => option.option_id === vote.option_id);
+    if(matchingOption){
+      matchingOption.numVotes++;
+    }
+  });
+
+  // 4. Calculate new amount of unique voters (some may no longer have any valid votes due to removal of least popular option)
+  const numUniqueVoters = new Set(newVotes.map(vote => vote.responder)).size;
+
+  // 5. Calculate and set vote percentages
+  newOptionsData.forEach((option) => {
+    option.votePercentage = +((option.numVotes / numUniqueVoters) * 100).toFixed(1);
+  });
+
+  // 6. Return the recursion (increment rounds)
+  return instantRunoff({
+    round: ivr.round + 1,
+    optionsData: newOptionsData,
+    votes: newVotes
+  });
 }

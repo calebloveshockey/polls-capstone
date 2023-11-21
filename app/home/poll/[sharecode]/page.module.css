@@ -43,7 +43,15 @@
     width: 100%;
 }
 
+.bottomButtonContainer{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
 
-.optionText{
-    
+.bottomButton{
+    width: 200px;
+    margin: 10px;
+    margin-top: 30px;
+    font-size: 20px;
 }

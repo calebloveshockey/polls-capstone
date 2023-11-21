@@ -4,7 +4,7 @@ import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, Checkbox, FilledInput, FormControl, FormControlLabel, FormGroup, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getUserData} from '@/actions/actions';
+import { castApprovalVote, getPollData, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
@@ -35,6 +35,8 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
 
     const [options, setOptions] = useState<{[key:number]: Option} >({});
 
+    const [error, setError] = useState<string | null>(null);
+
 
     // Retrieve poll data
     useEffect( () => {
@@ -59,10 +61,12 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
                     setOptions(initialOptionsState);
                     setShowPoll(true);
                 }else{
+                    setError("Failed to retrieve poll.");
                     console.error("Error on server retrieving poll data.")
                 }
 
             } catch (error) {
+                setError(JSON.stringify(error));
                 console.error('Error retrieving poll data:', error);
             }
         };
@@ -78,7 +82,7 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
         const selectedOptionIds = Object.keys(options).filter((optionId: string) => options[parseInt(optionId, 10)].selected);
 
         // Create an array of promises for parallel execution
-        const votePromises = selectedOptionIds.map((optionId: string) => castVote(pollData.poll_id, optionId));
+        const votePromises = selectedOptionIds.map((optionId: string) => castApprovalVote(pollData.poll_id, optionId));
 
         // Wait for all promises to resolve
         const results = await Promise.all(votePromises);
@@ -88,6 +92,7 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
             // Move to results page
             goToResults();
         }else{
+            setError("Vote failed to cast.");
             console.log("voting failed");
         }
 
@@ -143,23 +148,22 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
                 </Box>
 
                 <Box sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
+                    color: 'red',
+                    fontWeight: 'bold',
+                    marginTop: '5px',
                 }}>
+                    {error ? error : ""}
+                </Box>
+
+                <Box className={styles.bottomButtonContainer}>
                     <Button
-                        sx={{
-                            marginTop: "40px",
-                            fontSize: "20px",
-                        }}
+                        className={styles.bottomButton}
                         onClick={vote}
                         variant="contained"
                     >Vote</Button>
 
                     <Button
-                        sx={{
-                            marginTop: "40px",
-                            fontSize: "20px",
-                        }}
+                        className={styles.bottomButton}
                         onClick={goToResults}
                         variant="contained"
                     >View Results</Button>                  

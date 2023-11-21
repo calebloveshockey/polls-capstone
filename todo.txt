@@ -27,3 +27,18 @@
 - look into adding secure and samesite to cookie key
 - block users from voting twice
 - redirect users from My Account page if they don't actually have a user account.
+- need to test and style for mobile, since technically that would be the primary audience
+- poll voting page needs to check if poll is still open
+- add time picker to the date picker for creating polls
+- Add account deletion to My Account page
+- My Account page font sizes don't match up
+- add a tooltip next to the poll types that explains the different types and how they work
+- set up eslint for the project: especially the one that automatically cleans up import statements
+- eventually add suspense boundaries for dynamic and smooth loading
+- add question text to top of results
+- On the results page highlight which options were selected by current user.
+
+
+http://localhost:3000/home/poll/o48fn
+http://localhost:3000/home/poll/witl6
+http://localhost:3000/home/poll/36tkc

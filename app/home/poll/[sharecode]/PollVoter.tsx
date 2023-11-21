@@ -42,17 +42,6 @@ export default function PollVoter({ shareCode }: PollVoterProps) {
             {pollType === "Traditional" &&  <TradVoter shareCode={shareCode}/> }
             {pollType === "Ranked" && <RankedVoter shareCode={shareCode}/>}
             {pollType === "Approval" && <ApprovalVoter shareCode={shareCode}/>}
-
-
-            <Box sx={{
-                borderTop: '2px solid black',
-                marginTop: '30px',
-            }}>
-                DISCUSSION SECTION HERE
-            </Box>
-      
-
-
         </>
     );
 }

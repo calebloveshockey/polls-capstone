@@ -4,7 +4,7 @@ import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getUserData, getApprovalVotes} from '@/actions/actions';
+import { getApprovalVotes} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
@@ -17,7 +17,12 @@ interface ShowVoteProps {
 export default function ApprovalResults({ shareCode }: ShowVoteProps) {
 
     const [showPoll, setShowPoll] = useState(false);
-    const [voteData, setVoteData] = useState({voters: 0, votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]});
+    const [voteData, setVoteData] = useState({
+        question: "",
+        description: "",
+        voters: 0, 
+        votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]
+    });
 
     // Retrieve poll data
     useEffect( () => {
@@ -51,6 +56,14 @@ export default function ApprovalResults({ shareCode }: ShowVoteProps) {
                 <Box sx={{
                     width: '90%',
                 }}>
+                    <Box className={styles.questionTitle}>
+                        {voteData.question}
+                    </Box>
+
+                    <Box className={styles.descriptionTitle}>
+                        {voteData.description}
+                    </Box>
+
                     {voteData.votes.map( (option, i) => (
                         <Box sx={{
                             display: 'grid',

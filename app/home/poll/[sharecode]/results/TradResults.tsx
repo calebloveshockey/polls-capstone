@@ -4,7 +4,7 @@ import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getTradVotes, getUserData} from '@/actions/actions';
+import { getTradVotes } from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
@@ -17,7 +17,11 @@ interface ShowVoteProps {
 export default function TradResults({ shareCode }: ShowVoteProps) {
 
     const [showPoll, setShowPoll] = useState(false);
-    const [voteData, setVoteData] = useState([{option_name: "None", numVotes: 0, votePercentage: 0}]);
+    const [voteData, setVoteData] = useState({
+        question: "",
+        description: "",
+        votes: [{option_name: "None", numVotes: 0, votePercentage: 0}]
+    });
 
 
     // Retrieve poll data
@@ -28,7 +32,7 @@ export default function TradResults({ shareCode }: ShowVoteProps) {
                 const data = await getTradVotes(shareCode);
                 console.log(data);
 
-                if(data[0].option_name !== "None"){
+                if(data.votes[0].option_name !== "None"){
                     setVoteData(data);
                     setShowPoll(true);
                 }else{
@@ -52,7 +56,15 @@ export default function TradResults({ shareCode }: ShowVoteProps) {
                 <Box sx={{
                     width: '90%',
                 }}>
-                    {voteData.map( (option, i) => (
+                    <Box className={styles.questionTitle}>
+                        {voteData.question}
+                    </Box>
+
+                    <Box className={styles.descriptionTitle}>
+                        {voteData.description}
+                    </Box>
+
+                    {voteData.votes.map( (option, i) => (
                         <Box sx={{
                             display: 'grid',
                             gridTemplateColumns: '20% 80%',
@@ -92,7 +104,7 @@ export default function TradResults({ shareCode }: ShowVoteProps) {
                     fontSize: '18px',
                     fontWeight: '500',
                 }}>
-                    Total Votes Cast: {voteData.reduce((total, item) => total + item.numVotes, 0)}
+                    Total Votes Cast: {voteData.votes.reduce((total, item) => total + item.numVotes, 0)}
                 </Box>
 
             </>

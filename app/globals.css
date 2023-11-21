@@ -15,9 +15,7 @@
   --poll-color-7: 222, 147, 95;  /* Soft Tan */
   --poll-color-8: 201, 150, 167; /* Soft Rose */
   --poll-color-9: 180, 201, 219; /* Soft Lavender */
-  --poll-color-10: 155, 221, 183; /* Soft Mint */
-
-  
+  --poll-color-10: 155, 221, 183; /* Soft Mint */  
 }
 
 * {
@@ -37,7 +35,6 @@ body {
 
   color: rgb(var(--foreground-rgb));
   background: linear-gradient( to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-
 }
 
 

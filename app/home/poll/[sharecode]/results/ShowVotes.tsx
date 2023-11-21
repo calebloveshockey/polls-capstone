@@ -4,7 +4,7 @@ import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
-import { castVote, changePassword, createPoll, getPollData, getPollType, getUserData } from '@/actions/actions';
+import { getPollType } from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import TradVotes, { TradResults } from './TradResults';
 import RankedResults from './RankedResults';
 import ApprovalResults from './ApprovalResults';
+import Discussion from '@/components/Discussion';
 
 interface ShowVoteProps {
     shareCode: string;
@@ -52,8 +53,9 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
                 <Box sx={{
                     borderTop: '2px solid black',
                     marginTop: '30px',
+                    width: '80%'  
                 }}>
-                    DISCUSSION SECTION HERE
+                    <Discussion shareCode={shareCode}/>
                 </Box>
         </>
     );
