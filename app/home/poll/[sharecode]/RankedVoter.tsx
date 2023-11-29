@@ -263,7 +263,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                                 fontWeight: 'bold',
                                 marginRight: '5px',
 
-                            }}>{opt.option_name}</Box>
+                            }}>{opt.option_name}:</Box>
 
                             <Box sx={{
                                 display: 'flex',
