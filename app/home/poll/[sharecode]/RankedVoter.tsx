@@ -3,7 +3,7 @@
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
-import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, FullscreenExitRounded } from '@mui/icons-material';
+import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, FullscreenExitRounded, ArrowCircleDown, ArrowCircleUp } from '@mui/icons-material';
 import { castRankedVote, getPollData, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -13,6 +13,12 @@ import ReactiveButton from '@/components/reactiveButton';
 
 interface PollVoterProps {
     shareCode: string;
+}
+
+interface Option{
+    option_id: string;
+    option_name: string;
+    ranking: number;
 }
 
 export default function RankedVoter({ shareCode }: PollVoterProps) {
@@ -27,8 +33,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
         close_date: "",
         options: [{id: "", name: ""}],
     });
-    const [options, setOptions] = useState([{option_id: "0", option_name: ""}]);
-    const [rankings, setRankings] = useState<{ [key: string]: { option_id: string; ranking: number } }>({});
+    const [options, setOptions] = useState<Option[]>([]);
 
     const [isError, setIsError] = useState<boolean>(false);
     const [errorText, setErrorText] = useState<string>("");
@@ -48,8 +53,18 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                 // PROCESS DATA
                 if(data.status === "SUCCESS"){
                     setPollData(data.pollData);
-                    setOptions(data.options);
+
+                    // Process options data into options with rankings
+                    setOptions(data.options.map( (opt) => {
+                        return({
+                            option_id: opt.option_id,
+                            option_name: opt.option_name,
+                            ranking: 0    
+                        });
+                    }));
+
                     setShowPoll(true);
+
                 }else{
                     setIsError(false);
                     setErrorText("Error on server retrieving poll data.")
@@ -66,67 +81,104 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
     }, []);
 
 
-    // Ensures a rankings list are valid: ranking starting from 1 and continuing without skipping.
-    const checkForValidRanking = (ranks:{ [key: string]: { option_id: string; ranking: number } } ): boolean => {
-        const sortedRankings = Object.values(ranks)
-            .map((rank) => rank.ranking)
-            .sort((a, b) => a - b);
-
-        for (let i = 0; i < sortedRankings.length; i++) {
-            if (sortedRankings[i] !== i + 1) {
-                return false;
+    // Helper function to order options based on their ranking
+    function sortOptions(options: Option[]){
+        return options.sort((a, b) => {
+            // Both have non-zero rankings
+            if (a.ranking !== 0 && b.ranking !== 0) {
+                return a.ranking - b.ranking;
             }
-        }
-        return true;
+            // One of them has a ranking of 0
+            else if (a.ranking === 0 && b.ranking !== 0) {
+                return 1; // a should come after b
+            }
+            else if (a.ranking !== 0 && b.ranking === 0) {
+                return -1; // a should come before b
+            }
+            // Both have a ranking of 0
+            return 0;
+        });
     }
 
-    const handleRankingChange = (optionId: string, value: string) => {
-        //Ensure input is valid
-        const parsedValue = parseInt(value, 10);
-        if (!isNaN(parsedValue) && parsedValue > 0) {
 
-            // Create a copy of rankings or initialize it if it's empty
-            const newRankings = { ...rankings };
-
-            // Check if the ranking for this optionId already exists
-            if (newRankings[optionId]) {
-                // Replace the previous ranking
-                newRankings[optionId].ranking = parsedValue;
-            } else {
-                // Add a new ranking
-                newRankings[optionId] = { option_id: optionId, ranking: parsedValue };
-            }
-            
-            // Check that new ranking is valid
-            if(checkForValidRanking(newRankings)){
-                setIsError(false);
-                setErrorText("");
-                setRankings(newRankings);
-            }else{
-                setIsError(true);
-                setErrorText("Invalid ranking. Please rank the options starting from 1.");
-            }
-        } else {
-            setIsError(true);
-            setErrorText("Invalid ranking. Please rank the options starting from 1.");
-        }
-    };
-
-    const vote = async () => {
-        setIsError(false);
-        setErrorText("");
-
-        const rankingValues = Object.values(rankings);
-
-        // Check for duplicates and valid rankings
-        if (!checkForValidRanking(rankings) || isError) {
-            setIsError(false);
-            setErrorText("Invalid rankings. Ensure each ranking is unique and starts from 1 without skips.");
+    function upRanking(opt : Option){
+        // Cannot go above ranking of 1
+        if(opt.ranking === 1){
             return;
         }
 
+        // If no ranking, give lowest ranking
+        if(opt.ranking === 0){
+            // Get highest current ranking
+            const highestRanking = options.reduce((max, o) => 
+                (o.ranking > max) ? (o.ranking) : (max), 
+                options[0].ranking
+            );
+
+            // Find opt in options and update its ranking to highestRanking + 1
+            const index = options.findIndex(o => o.option_id === opt.option_id);
+            const newOptions = [...options];
+            newOptions[index].ranking = highestRanking + 1;
+            setOptions(newOptions);
+            return;
+        }
+
+        // Otherwise, just swap ranking with option above        
+        // Get index of this option
+        const index = options.findIndex(o => o.option_id === opt.option_id);
+        // Get index of option it will be trading places with
+        const targetRanking = opt.ranking - 1;
+        const targetIndex = options.findIndex(o => o.ranking === targetRanking);
+        // Swap rankings
+        const newOptions = [...options];
+        newOptions[targetIndex].ranking = opt.ranking;
+        newOptions[index].ranking = targetRanking;
+        setOptions(newOptions);
+    }
+
+    function downRanking(opt : Option){
+        // Cannot go below ranking of 0
+        if(opt.ranking === 0){
+            return;
+        }
+
+        // If highest rank value, change to 0
+        const highestRanking = options.reduce((max, o) => 
+            (o.ranking > max) ? (o.ranking) : (max), 
+            options[0].ranking
+        );
+        if(opt.ranking === highestRanking){
+            // Find opt in options and update its ranking to highestRanking + 1
+            const index = options.findIndex(o => o.option_id === opt.option_id);
+            const newOptions = [...options];
+            newOptions[index].ranking = 0;
+            setOptions(newOptions);
+            return;
+        }
+
+        // Otherwise, just swap ranking with option below        
+        // Get index of this option
+        const index = options.findIndex(o => o.option_id === opt.option_id);
+        // Get index of option it will be trading places with
+        const targetRanking = opt.ranking + 1;
+        const targetIndex = options.findIndex(o => o.ranking === targetRanking);
+
+        // Swap rankings
+        const newOptions = [...options];
+        newOptions[targetIndex].ranking = opt.ranking;
+        newOptions[index].ranking = targetRanking;
+        setOptions(newOptions);
+    }
+
+    // Submit votes
+    const vote = async () => {
+        setIsError(false);
+        setErrorText("");
         setIsVoteProcessing(true);
-        const votePromises = rankingValues.map((r) => castRankedVote(pollData.poll_id, r.option_id, r.ranking));
+
+        // Remove all options left unranked (ranking of 0)
+        const rankings = options.filter( (opt) => opt.ranking !== 0);
+        const votePromises = rankings.map((r) => castRankedVote(pollData.poll_id, r.option_id, r.ranking));
 
         try {
             // Wait for all promises to resolve
@@ -193,7 +245,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                     flexDirection: 'column',
                 }}>
   
-                    {options.map((opt) => (
+                    {sortOptions(options).map((opt) => (
                         <Box 
                             sx={{
                                 display: 'flex',
@@ -212,20 +264,29 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                                 marginRight: '5px',
 
                             }}>{opt.option_name}</Box>
-                            <TextField
-                                sx={{
-                                    margin: '5px',
-                                    width: '100px',
-                                }}
-                                key={opt.option_id}
-                                variant="outlined"
-                                type="number"
-                                InputProps={{
-                                    inputProps: { min: 1 },
-                                }}
-                                onChange={(e) => handleRankingChange(opt.option_id, e.target.value)}
-                                error={isError}
-                            />
+
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '20px',
+                                fontWeight: 'bold',
+                                fontSize: '20px',
+                                width: '30px',
+
+                            }}>{(opt.ranking !== 0) ? opt.ranking : "-"}</Box>
+
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                            }}>
+                                <IconButton size="small" onClick={() => upRanking(opt)}>
+                                    <ArrowCircleUp color='success'/>
+                                </IconButton>
+                                <IconButton size="small" onClick={() => downRanking(opt)}>
+                                    <ArrowCircleDown color='error'/>
+                                </IconButton>
+                            </Box>
+
                         </Box>
                     ))}
 
