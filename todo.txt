@@ -1,45 +1,60 @@
 - copy all builtin vercel styling to my app
 - review existing pages
 - Add the cool hover effect for the bottom links on OG app to the nav links on main app
-- make a dynamic nav link that checks if logged in and makes it "Account" and "Logout", otherwise it makes it "Login"
-- make default starting page just show "Loading..." and redirect to home page
 - Add feedback to login page
 - redo .env to match with vercel to make things easier
 - eventually need to look at protecting the server actions more, as apparently they are exposed API endpoints
-- some sort of explanation of each poll type when creating a poll
 - eventually make the endDate picker be much better: especially need to add time not just date. I visualize a slider that can give you two different types of pickers, one for "pick a date and time", and one that is "how long do you want this poll to run"
 - eventually should add option descriptions
-- usernames should not be case sensitive
 - eventually fix how I have two exports on each component page, need to figure out which way is better and standardize
 - eventually standardize server action responses
-- add error checking for the "End Date" when creating a poll (should not be able to create a poll with an expiry date that is already expired)
 - definitely need to standardize the server action responses
 - privacy settings for polls 
 - way to know what the user voted for, and highlight that option in the poll
 - make results page live using polling or sockets
-- if the user sends empty options they forgot to delete when creating a new poll, these should just be ignored, I can see this being a common "user error".
 - Change the TradVoter etc. and TradResults etc, styling to use sheets since they share a lot of styling
 - Probably should order the results on the poll page
-- implement a non-account based cookie user tracking
-- make sure all colors are unique in the bar graphs
 - after creating account, find way to send user back to login page and have it display a success message. Need to figure out how to use the router to add #$vars or whatever they are in the URL, and how to access them from the URL in the component.
-- add code to create default admin account in dbinitializer
 - look into adding secure and samesite to cookie key
 - block users from voting twice
-- redirect users from My Account page if they don't actually have a user account.
-- need to test and style for mobile, since technically that would be the primary audience
 - poll voting page needs to check if poll is still open
 - add time picker to the date picker for creating polls
-- Add account deletion to My Account page
-- My Account page font sizes don't match up
-- add a tooltip next to the poll types that explains the different types and how they work
 - set up eslint for the project: especially the one that automatically cleans up import statements
 - eventually add suspense boundaries for dynamic and smooth loading
 - add question text to top of results
-- On the results page highlight which options were selected by current user.
+
+
+Priority:
+- On a ranked poll, make user have ability to go down from 1 to 0, which will then make it null (right now you can't click the arrows to make it go to zero, you have to manually backspace)
+- On a ranked poll, have the options change render order after user enters a number (put them in that ranked order) 
+- On the results page, make sure the result bars have a set height, not just based off their row's height, because if an option takes up multiple rows, the voting bar takes up twice the height
+- try adding a border around the results on the results page see if it makes it look good
+- Change the "Share the poll" thing to be much better. I think best would be a button that has an icon on it, and when clicked it shows an animation confirming you copied it
+- make navbar have stylized responsive behavior
+- add to database script a creation of an admin account
+- Make sure admin account management page works correctly. 
+- On Account Management page, allow user to remove their account
+- Add Users page that admin can look at all users and search/sort
+- On users page, admin can click to visit a user's account page and can delete their account.
+- Add polls page that any account can view: shows their list of polls
+- When the user that created a poll is on the poll page, show a button that will take them to an edit-poll page
+- Edit poll page: Change title/description text, or delete the poll altogether
+- Admin can access the edit poll page of any poll
+- Admin version of Polls page shows all polls on the samesite
+- Add admin summary page: Shows number of users, and number of polls created, and number of votes counted
+- Add Question mark icon on create-poll page that explains how each poll type works
+- Add Question mark icon on poll pages next to a "Type: Ranked" etc. that will explain how the poll system works
+- Change the colors of the voting bars on results page
+- need to test and style for mobile, since technically that would be the primary audience
+- make sure the close date field is not necessary in order to create a poll
+- usernames should not be case sensitive
+- add error checking for the "End Date" when creating a poll (should not be able to create a poll with an expiry date that is already expired)
+- if the user sends empty options they forgot to delete when creating a new poll, these should just be ignored, I can see this being a common "user error".
+- redirect users from My Account page if they don't actually have a user account.
+- My Account page font sizes don't match up
 - handle edge case of viewing poll results with no votes
-
-
-http://localhost:3000/home/poll/o48fn
-http://localhost:3000/home/poll/witl6
-http://localhost:3000/home/poll/36tkc
+- add error checking if any options are identical when creating a poll (should not be allowed)
+- fix scrolling of background -- on pages that extend the page lower, the cool background transition shows the border.
+- Add automatic refresh every 5 seconds to results page to pull results data again
+- Add replies to the comment section
+- make "Login" in "Login to join the discussion be a link to the login page

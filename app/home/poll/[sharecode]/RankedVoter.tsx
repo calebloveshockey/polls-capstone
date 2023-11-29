@@ -9,6 +9,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
+import ReactiveButton from '@/components/reactiveButton';
 
 interface PollVoterProps {
     shareCode: string;
@@ -29,25 +30,34 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
     const [options, setOptions] = useState([{option_id: "0", option_name: ""}]);
     const [rankings, setRankings] = useState<{ [key: string]: { option_id: string; ranking: number } }>({});
 
-    const [error, setError] = useState<string | null>(null);
-
+    const [isError, setIsError] = useState<boolean>(false);
+    const [errorText, setErrorText] = useState<string>("");
+    const [isVoteProcessing, setIsVoteProcessing] = useState<boolean>(false);
+    const [isVoteSuccessful, setIsVoteSuccessful] = useState<boolean>(false);
+    const [isResultsProcessing, setIsResultsProcessing] = useState<boolean>(false);
 
     // Retrieve poll data
     useEffect( () => {
         const fetchData = async () => {
+            setIsError(false);
+            setErrorText("");
             try {
                 // GET DATA
                 const data = await getPollData(shareCode);
 
+                // PROCESS DATA
                 if(data.status === "SUCCESS"){
                     setPollData(data.pollData);
                     setOptions(data.options);
                     setShowPoll(true);
                 }else{
-                    console.error("Error on server retrieving poll data.")
+                    setIsError(false);
+                    setErrorText("Error on server retrieving poll data.")
                 }
 
             } catch (error) {
+                setIsError(true);
+                setErrorText("An unknown error occurred when attempting to retrieve poll data.");
                 console.error('Error retrieving poll data:', error);
             }
         };
@@ -89,27 +99,33 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
             
             // Check that new ranking is valid
             if(checkForValidRanking(newRankings)){
-                setError(null);
+                setIsError(false);
+                setErrorText("");
                 setRankings(newRankings);
             }else{
-                setError("Invalid ranking. Please rank the options starting from 1.");
+                setIsError(true);
+                setErrorText("Invalid ranking. Please rank the options starting from 1.");
             }
         } else {
-            setError("Invalid ranking. Please rank the options starting from 1.");
+            setIsError(true);
+            setErrorText("Invalid ranking. Please rank the options starting from 1.");
         }
     };
 
     const vote = async () => {
-        console.log("Casting vote");
+        setIsError(false);
+        setErrorText("");
 
         const rankingValues = Object.values(rankings);
 
         // Check for duplicates and valid rankings
-        if (!checkForValidRanking(rankings) || error !== null) {
-            setError("Invalid rankings. Ensure each ranking is unique and starts from 1 without skips.");
+        if (!checkForValidRanking(rankings) || isError) {
+            setIsError(false);
+            setErrorText("Invalid rankings. Ensure each ranking is unique and starts from 1 without skips.");
             return;
         }
 
+        setIsVoteProcessing(true);
         const votePromises = rankingValues.map((r) => castRankedVote(pollData.poll_id, r.option_id, r.ranking));
 
         try {
@@ -118,6 +134,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
 
             // Check if all results have success status
             if(voteResults.every((res) => res.status === "SUCCESS")){
+                setIsVoteSuccessful(true);
                 // Move to results page
                 goToResults();
 
@@ -126,23 +143,27 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                 const errorResults = voteResults.filter((res) => res.status !== "SUCCESS");
                 if(errorResults.length > 0 ){
                     if(errorResults[0].status === "ERROR" && errorResults[0].error){
-                        setError(errorResults[0].error);
+                        setIsError(true);
+                        setErrorText(errorResults[0].error);
                     }else{
-                        setError("Votes failed to cast.");
+                        setIsError(true);
+                        setErrorText("Votes failed to cast.");
                     }
                 }else{
-                    setError("Votes failed to cast.");
+                    setIsError(true);
+                    setErrorText("Votes failed to cast.");
                 }
             }
 
         } catch (error) {
-            setError(JSON.stringify(error));
+            setErrorText(JSON.stringify(error));
             console.error("Voting failed:", error);
         }
-
+        setIsVoteProcessing(false);
     };
 
     const goToResults = () => {
+        setIsResultsProcessing(!isVoteProcessing);
         router.push("/home/poll/" + shareCode + "/results");
     };
 
@@ -203,7 +224,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                                     inputProps: { min: 1 },
                                 }}
                                 onChange={(e) => handleRankingChange(opt.option_id, e.target.value)}
-                                error={error !== null}
+                                error={isError}
                             />
                         </Box>
                     ))}
@@ -214,21 +235,23 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                     color: 'red',
                     fontWeight: 'bold',
                 }}>
-                    {error ? error : ""}
+                    {isError ? errorText : ""}
                 </Box>
 
                 <Box className={styles.bottomButtonContainer}>
-                    <Button
-                        className={styles.bottomButton}
+                    <ReactiveButton 
+                        text={"VOTE"} 
+                        isSuccess={isVoteSuccessful} 
+                        isProcessing={isVoteProcessing} 
                         onClick={vote}
-                        variant="contained"
-                    >Vote</Button>
+                    />  
 
-                    <Button
-                        className={styles.bottomButton}
+                    <ReactiveButton 
+                        text={"VIEW RESULTS"} 
+                        isSuccess={false} 
+                        isProcessing={isResultsProcessing} 
                         onClick={goToResults}
-                        variant="contained"
-                    >View Results</Button>                  
+                    />             
                 </Box>
             </>
         :

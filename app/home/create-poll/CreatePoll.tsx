@@ -9,15 +9,23 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
+import ReactiveButton from '@/components/reactiveButton';
 
 export default function CreatePoll() {
     const router = useRouter();
 
+    // Form data
     const [question, setQuestion] = useState("");
     const [description, setDescription] = useState("");
     const [type, setType] = useState("Traditional");
     const [endDate, setEndDate] = useState<Dayjs | null>(null);
     const [options, setOptions] = useState(["", ""]);
+
+    // User feedback
+    const [error, setError] = useState<boolean>(false);
+    const [success, setSuccess] = useState<boolean>(false);
+    const [infoMessage, setInfoMessage] = useState<string>("");
+    const [processing, setProcessing] = useState<boolean>(false);
 
     const handleQuestion = (newValue: SetStateAction<string>) => {
         setQuestion(newValue);
@@ -54,7 +62,9 @@ export default function CreatePoll() {
 
 
     const publishPoll = async () => {
-        console.log("Publishing poll");
+        setProcessing(true);
+        setError(false);
+        setInfoMessage("");
 
         // Check that none of the inputs were left empty:
         if(question !== "" && endDate !== null){
@@ -71,13 +81,18 @@ export default function CreatePoll() {
 
             if(res.status === "SUCCESS"){
                 // Move to the poll page
+                setSuccess(true);
                 router.push("/home/poll/" + res.shareCode);
             }else{
-                console.log("Create poll failed on server side.");
+                setError(true);
+                setInfoMessage("Failed to create poll.");
             }
         }else{
-            console.log("Something wrong with the inputs");
+            setError(true)
+            setInfoMessage("Do not leave any inputs empty.");
         }
+
+        setProcessing(false);
     }
 
 
@@ -221,15 +236,23 @@ export default function CreatePoll() {
                 </IconButton>
             </Box>
 
+            <Box sx={{
+                marginTop: "40px",
+            }}>
+                <ReactiveButton
+                    text="PUBLISH"
+                    isSuccess={success}
+                    isProcessing={processing}
+                    onClick={publishPoll}
+                />
+            </Box>
 
-            <Button
-                sx={{
-                    marginTop: "40px",
-                    fontSize: "20px",
-                }}
-                onClick={publishPoll}
-                variant="contained"
-            >PUBLISH</Button>
+            <Box sx={{
+                marginTop: '10px',
+                color: error ? 'red' : 'black',
+            }}>
+                {infoMessage}
+            </Box>
 
 
         </>

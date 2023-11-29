@@ -9,6 +9,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
+import ReactiveButton from '@/components/reactiveButton';
 
 interface PollVoterProps {
     shareCode: string;
@@ -30,27 +31,36 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
 
     const [selectedOption, setSelectedOption] = useState("default");
 
-    const [error, setError] = useState<string | null>(null);
+    const [isError, setIsError] = useState<boolean>(false);
+    const [errorText, setErrorText] = useState<string>("");
+    const [isVoteProcessing, setIsVoteProcessing] = useState<boolean>(false);
+    const [isVoteSuccessful, setIsVoteSuccessful] = useState<boolean>(false);
+    const [isResultsProcessing, setIsResultsProcessing] = useState<boolean>(false);
 
 
     // Retrieve poll data
     useEffect( () => {
         const fetchData = async () => {
+            setIsError(false);
+            setErrorText("");
             try {
                 // GET DATA
                 const data = await getPollData(shareCode);
 
+                // PROCESS DATA
                 if(data.status === "SUCCESS"){
                     setPollData(data.pollData);
                     setOptions(data.options);
                     setSelectedOption(data.options[0].option_id)
                     setShowPoll(true);
                 }else{
-                    console.error("Error on server retrieving poll data.")
+                    setIsError(false);
+                    setErrorText("Unable to retrieve poll data.");
                 }
 
             } catch (error) {
-                setError(JSON.stringify(error));
+                setIsError(true);
+                setErrorText("An unknown error occurred when attempting to retrieve poll data.");
                 console.error('Error retrieving poll data:', error);
             }
         };
@@ -64,22 +74,29 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
     };
 
     const vote = async () => {
-        console.log("Casting vote");
+        setIsError(false);
+        setErrorText("");
+        setIsVoteProcessing(true);
 
         const res = await castTradVote(pollData.poll_id, selectedOption);
 
         if(res.status === "SUCCESS"){
+            setIsVoteSuccessful(true);
             // Move to results page
             goToResults();
         }else if(res.status === "ERROR" && res.error){
-            setError(res.error);
+            setIsError(true);
+            setErrorText(res.error);
         }else{
-            setError("Vote failed to cast.");
+            setIsError(true);
+            setErrorText("Vote failed to cast.");
         }
 
+        setIsVoteProcessing(false);
     };
 
     const goToResults = () => {
+        setIsResultsProcessing(!isVoteProcessing);
         router.push("/home/poll/" + shareCode + "/results");
     };
 
@@ -130,21 +147,23 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
                     color: 'red',
                     fontWeight: 'bold',
                 }}>
-                    {error ? error : ""}
+                    {isError ? errorText : ""}
                 </Box>
 
                 <Box className={styles.bottomButtonContainer}>
-                    <Button
-                        className={styles.bottomButton}
+                    <ReactiveButton 
+                        text={"VOTE"} 
+                        isSuccess={isVoteSuccessful} 
+                        isProcessing={isVoteProcessing} 
                         onClick={vote}
-                        variant="contained"
-                    >Vote</Button>
+                    />  
 
-                    <Button
-                        className={styles.bottomButton}
+                    <ReactiveButton 
+                        text={"VIEW RESULTS"} 
+                        isSuccess={false} 
+                        isProcessing={isResultsProcessing} 
                         onClick={goToResults}
-                        variant="contained"
-                    >View Results</Button>                  
+                    />             
                 </Box>
             </>
         :

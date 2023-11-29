@@ -9,6 +9,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
+import ReactiveButton from '@/components/reactiveButton';
 
 interface PollVoterProps {
     shareCode: string;
@@ -35,16 +36,24 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
 
     const [options, setOptions] = useState<{[key:number]: Option} >({});
 
-    const [error, setError] = useState<string | null>(null);
+    const [isError, setIsError] = useState<boolean>(false);
+    const [errorText, setErrorText] = useState<string>("");
+    const [isVoteProcessing, setIsVoteProcessing] = useState<boolean>(false);
+    const [isVoteSuccessful, setIsVoteSuccessful] = useState<boolean>(false);
+    const [isResultsProcessing, setIsResultsProcessing] = useState<boolean>(false);
+
 
 
     // Retrieve poll data
     useEffect( () => {
         const fetchData = async () => {
+            setIsError(false);
+            setErrorText("");
             try {
                 // GET DATA
                 const data = await getPollData(shareCode);
 
+                // PROCESS DATA
                 if(data.status === "SUCCESS"){
                     setPollData(data.pollData);
                     setOptions(data.options);
@@ -61,12 +70,13 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
                     setOptions(initialOptionsState);
                     setShowPoll(true);
                 }else{
-                    setError("Failed to retrieve poll.");
-                    console.error("Error on server retrieving poll data.")
+                    setIsError(true);
+                    setErrorText("Failed to retrieve poll.");
                 }
 
             } catch (error) {
-                setError(JSON.stringify(error));
+                setIsError(true);
+                setErrorText("Unknown error occurred while retriving poll data.");
                 console.error('Error retrieving poll data:', error);
             }
         };
@@ -76,11 +86,13 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
 
 
     const vote = async () => {
-        console.log("Casting vote");
+        setIsError(false);
+        setErrorText("");
 
         // Get the list of selected option ids
         const selectedOptionIds = Object.keys(options).filter((optionId: string) => options[parseInt(optionId, 10)].selected);
 
+        setIsVoteProcessing(true);
         // Create an array of promises for parallel execution
         const votePromises = selectedOptionIds.map((optionId: string) => castApprovalVote(pollData.poll_id, optionId));
 
@@ -89,16 +101,18 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
 
         // Check if all votes were successful
         if (results.every((res) => res.status === "SUCCESS")) {
+            setIsVoteSuccessful(true);
             // Move to results page
             goToResults();
         }else{
-            setError("Vote failed to cast.");
-            console.log("voting failed");
+            setIsError(true);
+            setErrorText("Vote failed to cast.");
         }
-
+        setIsVoteProcessing(false);  
     };
 
     const goToResults = () => {
+        setIsResultsProcessing(!isVoteProcessing);
         router.push("/home/poll/" + shareCode + "/results");
     };
 
@@ -150,23 +164,24 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
                 <Box sx={{
                     color: 'red',
                     fontWeight: 'bold',
-                    marginTop: '5px',
                 }}>
-                    {error ? error : ""}
+                    {isError ? errorText : ""}
                 </Box>
 
                 <Box className={styles.bottomButtonContainer}>
-                    <Button
-                        className={styles.bottomButton}
+                    <ReactiveButton 
+                        text={"VOTE"} 
+                        isSuccess={isVoteSuccessful} 
+                        isProcessing={isVoteProcessing} 
                         onClick={vote}
-                        variant="contained"
-                    >Vote</Button>
+                    />  
 
-                    <Button
-                        className={styles.bottomButton}
+                    <ReactiveButton 
+                        text={"VIEW RESULTS"} 
+                        isSuccess={false} 
+                        isProcessing={isResultsProcessing} 
                         onClick={goToResults}
-                        variant="contained"
-                    >View Results</Button>                  
+                    />             
                 </Box>
             </>
         :

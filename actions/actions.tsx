@@ -983,10 +983,10 @@ export async function getComments(shareCode: string){
   try{
     const client = await pool.connect();
 
-    // Validate that user has an account
-    const validation = await validateUser();
-
+    // Validate that key exists
+    const validation = await validateKey();
     if(validation.status === "SUCCESS"){
+
       // Get poll id
       const {rows: pollData} = await client.query("SELECT poll_id FROM polls WHERE share_link = $1", [shareCode]);
       if(pollData.length === 1){
@@ -999,23 +999,29 @@ export async function getComments(shareCode: string){
           WHERE c.poll_id = $1`,
           [pollData[0].poll_id]
         );
-
-        console.log("SERVER: comments object: ");
-        console.log(comments);
         
         client.release();
-        return {status: "SUCCESS", comments: comments};
+
+        // Check whether user is logged in or not
+        const userValidation = await validateUser();
+        if(userValidation.status === "SUCCESS"){
+          // User has account
+          return {status: "SUCCESS", comments: comments};
+        }else{
+          // User does not have account, but is still allowed to see the comments
+          return {status: "NOUSER", comments: comments};
+        }
       }
     }
 
-    // User does not have an account
+    // Failure to validate key
     client.release();
     return{
-      status: "NOUSER",
+      status: "FAILURE",
       comments: []
     }
   }catch(error){
-    console.log("SERVER: Error retrieving poll data: " + error);
+    console.log("SERVER: Error retrieving comments: " + error);
   }
 
   return{
@@ -1057,7 +1063,7 @@ export async function addComment(shareCode: string, newComment: string, replying
     // User does not have an account
     client.release();
   }catch(error){
-    console.log("SERVER: Error retrieving poll data: " + error);
+    console.log("SERVER: Error adding comment: " + error);
   }
 
   return{status: "FAILURE"}
