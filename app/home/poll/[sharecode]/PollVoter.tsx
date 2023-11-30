@@ -14,7 +14,6 @@ interface PollVoterProps {
 
 export default function PollVoter({ shareCode }: PollVoterProps) {
     const [pollType, setPollType] = useState("");
-    const [pollName, setPollName] = useState("");
 
     // Retrieve poll type
     useEffect( () => {
@@ -25,7 +24,6 @@ export default function PollVoter({ shareCode }: PollVoterProps) {
 
                 if(data.status === "SUCCESS"){
                     setPollType(data.pollType);
-                    setPollName(data.pollName);
                 }else{
                     console.error("Error on server retrieving poll type.")
                 }
