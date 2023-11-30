@@ -46,14 +46,16 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
     }, []);
 
     const copyUrlToClipboard = () => {
-        const currentUrl = window.location.href; // Get the current URL
+        let currentUrl = window.location.href; // Get the current URL
+
+        // Remove the /results from the url if it exists
+        currentUrl = currentUrl.replace(/\/results$/, '');
+
         navigator.clipboard.writeText(currentUrl) // Copy the URL to clipboard
           .then(() => {
-            // Handle success (e.g., show a success message)
             console.log('URL copied to clipboard:', currentUrl);
           })
           .catch((error) => {
-            // Handle error (e.g., show an error message)
             console.error('Error copying URL to clipboard:', error);
           });
       };

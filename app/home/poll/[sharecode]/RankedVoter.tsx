@@ -250,6 +250,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                             sx={{
                                 display: 'flex',
                                 flexDirection: 'row',
+                                alignItems: 'center',
                                 marginRight: '100px',
                             }}
                             key={opt.option_id}
@@ -278,11 +279,18 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                             <Box sx={{
                                 display: 'flex',
                                 flexDirection: 'column',
+                                marginLeft: '5px',
                             }}>
-                                <IconButton size="small" onClick={() => upRanking(opt)}>
+                                <IconButton
+                                    sx={{padding: '0px'}}
+                                    size="small" 
+                                    onClick={() => upRanking(opt)}>
                                     <ArrowCircleUp color='success'/>
                                 </IconButton>
-                                <IconButton size="small" onClick={() => downRanking(opt)}>
+                                <IconButton 
+                                    sx={{padding: '0px'}}
+                                    size="small" 
+                                    onClick={() => downRanking(opt)}>
                                     <ArrowCircleDown color='error'/>
                                 </IconButton>
                             </Box>

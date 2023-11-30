@@ -47,6 +47,7 @@ Priority:
 - Change the colors of the voting bars on results page
 - need to test and style for mobile, since technically that would be the primary audience
 - make sure the close date field is not necessary in order to create a poll
+- Add a back button on voting results page
 - usernames should not be case sensitive
 - add error checking for the "End Date" when creating a poll (should not be able to create a poll with an expiry date that is already expired)
 - if the user sends empty options they forgot to delete when creating a new poll, these should just be ignored, I can see this being a common "user error".
