@@ -67,35 +67,18 @@ export default function RankedResults({ shareCode }: ShowVoteProps) {
                     </Box>
 
                     {voteData.votes.map( (option, i) => (
-                        <Box sx={{
-                            display: 'grid',
-                            gridTemplateColumns: '20% 80%',
-                            justifyItems: 'start',
-                            width: '100%',
-                            marginTop: '10px',
-                            marginBottom: '5px',
-                        }} key={option.option_name}>
-                            <Box sx={{
-                                fontWeight: 'bold',
-                                fontSize: '20px',
-                                gridColumn: '1/2',
-                                margin: '10px',
-                                justifySelf: 'end',
-                            }}>
+                        <Box 
+                            className={styles.resultRowContainer}
+                            key={option.option_name}
+                        >
+                            <Box className={styles.rowTitle}>
                                 {option.option_name}
                             </Box>
                             <Box sx={{
-                                fontSize: '15px',
-                                gridColumn: '2/3',
-                                minWidth: "10%",
                                 width: option.votePercentage+"%",
                                 backgroundColor: (option.numVotes > 0) ? `rgb(var(--poll-color-${(option.option_name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 10) + 1}))` : "",
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                whiteSpace: 'nowrap',
-                            }}>
-                                {option.votePercentage + "%" + " (" + option.numVotes + ")"}
+                            }} className={styles.rowBar}>
+                                {(option.numVotes > 0) ? (option.votePercentage + "%" + " (" + option.numVotes + ")") : ("-")}
                             </Box>
                         </Box>
                     ))}

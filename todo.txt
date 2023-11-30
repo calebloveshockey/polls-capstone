@@ -25,11 +25,6 @@
 
 
 Priority:
-- On a ranked poll, make user have ability to go down from 1 to 0, which will then make it null (right now you can't click the arrows to make it go to zero, you have to manually backspace)
-- On a ranked poll, have the options change render order after user enters a number (put them in that ranked order) 
-- On the results page, make sure the result bars have a set height, not just based off their row's height, because if an option takes up multiple rows, the voting bar takes up twice the height
-- try adding a border around the results on the results page see if it makes it look good
-- Change the "Share the poll" thing to be much better. I think best would be a button that has an icon on it, and when clicked it shows an animation confirming you copied it
 - make navbar have stylized responsive behavior
 - add to database script a creation of an admin account
 - Make sure admin account management page works correctly. 
@@ -59,3 +54,5 @@ Priority:
 - Add automatic refresh every 5 seconds to results page to pull results data again
 - Add replies to the comment section
 - make "Login" in "Login to join the discussion be a link to the login page
+- fix response from approval voter rejecting someone from voting twice. Right now it just says "failed to vote" instead of telling them they can't vote twice.
+

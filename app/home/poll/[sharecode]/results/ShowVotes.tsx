@@ -3,7 +3,7 @@
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
-import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
+import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, CopyAll, ArrowBack, Check } from '@mui/icons-material';
 import { getPollType } from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -45,20 +45,38 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
         fetchData();
     }, []);
 
+    // State for animation
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [showCopy, setShowCopy] = useState(true);
+
+    const returnToPoll = () => {
+        let currentUrl = window.location.href;
+        // Remove the /results from the url if it exists
+        currentUrl = currentUrl.replace(/\/results$/, '');
+        router.push(currentUrl);
+
+    }
+
     const copyUrlToClipboard = () => {
-        let currentUrl = window.location.href; // Get the current URL
+        let currentUrl = window.location.href;
 
         // Remove the /results from the url if it exists
         currentUrl = currentUrl.replace(/\/results$/, '');
 
-        navigator.clipboard.writeText(currentUrl) // Copy the URL to clipboard
-          .then(() => {
+        navigator.clipboard.writeText(currentUrl)
+        .then(() => {
             console.log('URL copied to clipboard:', currentUrl);
-          })
-          .catch((error) => {
+        })
+        .catch((error) => {
             console.error('Error copying URL to clipboard:', error);
-          });
-      };
+        });
+
+        // Change button icon with animation
+        setIsAnimating(true);
+        setTimeout(() => setShowCopy(false), 250);
+        setTimeout(() => setShowCopy(true), 1250);
+        setTimeout(() => setIsAnimating(false), 2000);
+    };
 
 
     return (
@@ -66,29 +84,47 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
                 {pollType === "Traditional" &&  <TradResults shareCode={shareCode}/> }
                 {pollType === "Ranked" && <RankedResults shareCode={shareCode}/>}
                 {pollType === "Approval" && <ApprovalResults shareCode={shareCode}/>}
-
+                
                 <Box sx={{
                     display: 'flex',
+                    marginTop: '20px',
+                    gap: '5px',
                 }}>
-                    <TextField
+                    <Button
                         sx={{
-                            marginTop: "40px",
+                            fontSize: '15px',
                         }}
-                        fullWidth
-                        label="Share the poll"
-                        variant="outlined"
-                        value={window.location.href}
-                        InputProps={{
-                            readOnly: true, // Make the input read-only
-                            endAdornment: (
-                            <InputAdornment position="end">
-                                {/* Add a button to copy the URL to clipboard */}
-                                <Button onClick={copyUrlToClipboard}>Copy</Button>
-                            </InputAdornment>
-                            ),
+                        variant='contained'
+                        onClick={returnToPoll}                    
+                    >
+                        <ArrowBack sx={{marginRight: '3px'}}/>
+                        Return to poll
+                    </Button>
+                    <Button
+                        sx={{
+                            fontSize: '15px',
+                            position: 'relative',
+                            paddingRight: '10px',
+                            '--button-bg': '#1976d2',
+                            '&:hover': {
+                                '--button-bg': '#1565c0',
+                            }
                         }}
-                    />
+                        variant='contained'
+                        onClick={copyUrlToClipboard}                    
+                    >
+                        { isAnimating ? "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0Copied!\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0" : "Share this poll"}   
+                        <div className={styles.iconsContainer}>
+                            { showCopy 
+                                ? <CopyAll className={styles.CopyAllIcon}/> 
+                                : <Check className={styles.CheckIcon}/>
+                            }
+                            <div className={`${styles.curtain} ${isAnimating ? styles.slideCurtain : ''}`}></div>
+                        </div>
+                    </Button>
                 </Box>
+
+
 
                 <Box sx={{
                     borderTop: '2px solid black',

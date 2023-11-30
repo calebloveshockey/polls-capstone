@@ -1,6 +1,8 @@
 .content{
     background-color: white;
-    padding: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
     width: 90%;
     max-width: 1400px;
     display: flex;
@@ -43,10 +45,12 @@
     width: 100%;
 }
 
+
+
 .questionTitle{
     margin: 20px;
-    font-size: 20px;
-    font-weight: 500;
+    font-size: 24px;
+    font-weight: bold;
     text-align: center;
 }
 
@@ -55,4 +59,83 @@
     margin: 20px;
     margin-top: 0px;
     font-size: 15px;
+}
+
+.resultRowContainer{
+    display: grid;
+    grid-template-columns: 20% 80%;
+    justify-items: start;
+    align-items: center;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.rowTitle{
+    font-weight: 500;
+    font-size: 18px;
+    grid-column: 1 / 2;
+    justify-self: end;
+    text-align: right;
+    padding: 5px 10px 5px 0px;
+}
+
+.rowBar{
+    font-size: 13px;
+    grid-column: 2 / 3;
+    min-width: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    height: 50px;
+}
+
+
+.shareButtonIcon{
+    margin: 5px 0px 0px 0px;
+}
+
+
+
+
+
+.iconsContainer {
+    position: relative;
+    width: 24px; /* Adjust based on icon size */
+    height: 24px; /* Adjust based on icon size */
+    overflow: hidden; /* Hide parts of the icon outside the container */
+    margin-left: 3px;
+}
+  
+.curtain {
+    position: absolute;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--button-bg);
+    transform: translateX(100%);
+    opacity: 0;
+}
+  
+@keyframes slideCurtain {
+    0%, 100% {
+        transform: translateX(100%);
+    }
+    50% {
+        transform: translateX(-100%);
+    }
+}
+
+.slideCurtain {
+    animation: slideCurtain 2s ease forwards;
+    opacity: 1;
+}
+
+.CopyAllIcon, .CheckIcon {
+    position: absolute;
+    right: 0;
+}
+  
+.CheckIcon {
+    color: #2DFE54
 }
