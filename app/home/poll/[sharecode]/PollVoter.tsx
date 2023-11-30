@@ -7,7 +7,6 @@ import { getPollType} from '@/actions/actions';
 import TradVoter from './TradVoter';
 import RankedVoter from './RankedVoter';
 import ApprovalVoter from './ApprovalVoter';
-import Head from 'next/head';
 
 interface PollVoterProps {
     shareCode: string;
@@ -42,10 +41,6 @@ export default function PollVoter({ shareCode }: PollVoterProps) {
 
     return (
         <>
-            <Head>
-                <title>{pollName}CUSTOM TITLE HERE</title>
-                <meta property="og:title" content={pollName + "CUSTOM TITLE HERE"} key="title" />
-            </Head>
             {pollType === "Traditional" &&  <TradVoter shareCode={shareCode}/> }
             {pollType === "Ranked" && <RankedVoter shareCode={shareCode}/>}
             {pollType === "Approval" && <ApprovalVoter shareCode={shareCode}/>}
