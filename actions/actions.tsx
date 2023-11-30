@@ -478,11 +478,11 @@ export async function getPollType(shareCode: string){
     const client = await pool.connect();
 
     // Select poll data
-    const {rows: pollData} = await client.query("SELECT type FROM polls WHERE share_link = $1", [shareCode]);
+    const {rows: pollData} = await client.query("SELECT type, question FROM polls WHERE share_link = $1", [shareCode]);
 
     if(pollData.length === 1){
         client.release();
-        return {status: "SUCCESS", pollType: pollData[0].type};
+        return {status: "SUCCESS", pollType: pollData[0].type, pollName: pollData[0].question};
     }
 
     client.release();
@@ -494,6 +494,7 @@ export async function getPollType(shareCode: string){
   return{
     status: "FAILURE",
     pollType: "",
+    pollName: "",
   }
 }
 
