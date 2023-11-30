@@ -87,6 +87,10 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
                 
                 <Box sx={{
                     display: 'flex',
+                    flexDirection: 'row',
+                    '@media (max-width: 600px)': {
+                        flexDirection: 'column',
+                    },
                     marginTop: '20px',
                     gap: '5px',
                 }}>
@@ -94,6 +98,7 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
                         sx={{
                             fontSize: '15px',
                         }}
+                        className={styles.bottomButtons}
                         variant='contained'
                         onClick={returnToPoll}                    
                     >
@@ -110,10 +115,13 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
                                 '--button-bg': '#1565c0',
                             }
                         }}
+                        className={styles.bottomButtons}
                         variant='contained'
                         onClick={copyUrlToClipboard}                    
                     >
-                        { isAnimating ? "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0Copied!\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0" : "Share this poll"}   
+                        <div className={styles.shareButtonText}>
+                            { isAnimating ? "Copied!" : "Share this poll"}   
+                        </div>
                         <div className={styles.iconsContainer}>
                             { showCopy 
                                 ? <CopyAll className={styles.CopyAllIcon}/> 
