@@ -37,13 +37,11 @@
 .field{
     width: 100%;
     padding: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .textInput{
     width: 100%;
-}
-
-
-.optionText{
-    
 }

@@ -82,7 +82,7 @@
 .rowBar{
     font-size: 13px;
     grid-column: 2 / 3;
-    min-width: 10%;
+    min-width: 5%;
     display: flex;
     align-items: center;
     justify-content: center;

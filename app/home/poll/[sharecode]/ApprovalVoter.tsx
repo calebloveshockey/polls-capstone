@@ -2,14 +2,15 @@
 
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, Checkbox, FilledInput, FormControl, FormControlLabel, FormGroup, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField } from '@mui/material';
-import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
+import { Box, Button, Checkbox, FilledInput, FormControl, FormControlLabel, FormGroup, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField, Tooltip, Typography } from '@mui/material';
+import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, Help } from '@mui/icons-material';
 import { castApprovalVote, getPollData, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
 import ReactiveButton from '@/components/reactiveButton';
+import React from 'react';
 
 interface PollVoterProps {
     shareCode: string;
@@ -42,7 +43,7 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
     const [isVoteSuccessful, setIsVoteSuccessful] = useState<boolean>(false);
     const [isResultsProcessing, setIsResultsProcessing] = useState<boolean>(false);
 
-
+    const [pollTypeTipOpen, setPollTypeTipOpen] = useState(false);
 
     // Retrieve poll data
     useEffect( () => {
@@ -127,6 +128,39 @@ export default function ApprovalVoter({ shareCode }: PollVoterProps) {
                     fontWeight: "500",
                 }}>
                     {pollData.question}
+                    <Tooltip
+                        title={
+                            <React.Fragment>
+                                <Typography color="inherit">Approval Voting:</Typography>
+                                {'Select any number of options you approve of. The option receiving the highest overall approval wins.'}
+                            </React.Fragment>
+                        }
+                        placement="right"
+                        onClose={() => setPollTypeTipOpen(false)}
+                        open={pollTypeTipOpen}
+                        PopperProps={{
+                            sx: {...{
+                                color: 'rgba(100, 0, 0, 0.87)',
+                                maxWidth: 220,
+                                fontSize: '15',
+                                '.MuiTooltip-tooltip': {
+                                    backgroundColor: 'var(--main-blue)'
+                                }
+                            }}
+                        }}
+                    >
+                        <IconButton
+                            sx={{
+                                marginLeft: '5px',
+                            }}
+                            onClick={() => setPollTypeTipOpen(true)}
+                        >
+                            <Help
+                                fontSize='medium'
+                                color='info'
+                            />
+                        </IconButton>
+                    </Tooltip>
                 </Box>
 
                 <Box sx={{

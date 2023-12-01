@@ -2,14 +2,15 @@
 
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
-import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle } from '@mui/icons-material';
+import { Box, Button, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Tooltip, Typography } from '@mui/material';
+import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, Help } from '@mui/icons-material';
 import { changePassword, createPoll, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
 import ReactiveButton from '@/components/reactiveButton';
+import React from 'react';
 
 export default function CreatePoll() {
     const router = useRouter();
@@ -26,6 +27,9 @@ export default function CreatePoll() {
     const [success, setSuccess] = useState<boolean>(false);
     const [infoMessage, setInfoMessage] = useState<string>("");
     const [processing, setProcessing] = useState<boolean>(false);
+
+    // Tooltip with info on poll types
+    const [pollTipOpen, setPollTipOpen] = useState(false);
 
     const handleQuestion = (newValue: SetStateAction<string>) => {
         setQuestion(newValue);
@@ -100,17 +104,11 @@ export default function CreatePoll() {
         <>
             <div className={styles.header}>New Poll</div> 
 
-            <Box sx={{
-                border: "0px solid red",
-            }} className={styles.fieldBox}>
-                <Box sx={{
-                    border: "0px solid blue",
-                }} className={styles.fieldLabel}>
+            <Box className={styles.fieldBox}>
+                <Box className={styles.fieldLabel}>
                     Question:
                 </Box>
-                <Box sx={{
-                    border: "0px solid pink",
-                }} className={styles.field}>
+                <Box className={styles.field}>
                     <TextField
                         value={question}
                         onChange={(event) => handleQuestion(event.target.value)}
@@ -120,17 +118,11 @@ export default function CreatePoll() {
                 </Box>
             </Box>
 
-            <Box sx={{
-                border: "0px solid red",
-            }} className={styles.fieldBox}>
-                <Box sx={{
-                    border: "0px solid blue",
-                }} className={styles.fieldLabel}>
+            <Box className={styles.fieldBox}>
+                <Box className={styles.fieldLabel}>
                     Description:
                 </Box>
-                <Box sx={{
-                    border: "0px solid pink",
-                }} className={styles.field}>
+                <Box className={styles.field}>
                     <TextField
                         value={description}
                         onChange={(event) => handleDescription(event.target.value)}
@@ -140,17 +132,11 @@ export default function CreatePoll() {
                 </Box>
             </Box>
 
-            <Box sx={{
-                border: "0px solid red",
-            }} className={styles.fieldBox}>
-                <Box sx={{
-                    border: "0px solid blue",
-                }} className={styles.fieldLabel}>
+            <Box className={styles.fieldBox}>
+                <Box className={styles.fieldLabel}>
                     Type:
                 </Box>
-                <Box sx={{
-                    border: "0px solid pink",
-                }} className={styles.field}>
+                <Box className={styles.field}>
                     <FormControl variant="filled" sx={{ minWidth: 150 }}>
                         <Select
                             labelId="poll-type"
@@ -163,20 +149,49 @@ export default function CreatePoll() {
                             <MenuItem value={"Approval"}>Approval</MenuItem>
                         </Select>
                     </FormControl>
+                    <Tooltip
+                        title={
+                            <React.Fragment>
+                                <Typography color="inherit">Poll Types:</Typography>
+                                <b>{'Traditional: '}</b>{'A standard poll where the option with the most votes wins. This is commonly known as "First-past-the-post" voting.'}<br></br><br></br>
+                                <b>{'Ranked: '}</b>{'Voters rank options in order of preference. Utilizes the STV (Single Transferable Vote) system. If no clear winner emerges, the least popular option is eliminated, and their votes are transferred to the next preference. This process repeats until a winner is determined.'}<br></br><br></br>
+                                <b>{'Approval: '}</b>{'Voters select any number of options they approve. The option receiving the highest overall approval wins.'}
+                            </React.Fragment>
+                        }
+                        placement="right"
+                        onClose={() => setPollTipOpen(false)}
+                        open={pollTipOpen}
+                        PopperProps={{
+                            sx: {...{
+                                color: 'rgba(100, 0, 0, 0.87)',
+                                maxWidth: 220,
+                                fontSize: '15',
+                                '.MuiTooltip-tooltip': {
+                                    backgroundColor: 'var(--main-blue)'
+                                }
+                            }}
+                        }}
+                    >
+                        <IconButton
+                            sx={{
+                                marginLeft: '5px',
+                            }}
+                            onClick={() => setPollTipOpen(true)}
+                        >
+                            <Help
+                                fontSize='large'
+                                color='info'
+                            />
+                        </IconButton>
+                    </Tooltip>
                 </Box>
             </Box>
 
-            <Box sx={{
-                border: "0px solid red",
-            }} className={styles.fieldBox}>
-                <Box sx={{
-                    border: "0px solid blue",
-                }} className={styles.fieldLabel}>
+            <Box className={styles.fieldBox}>
+                <Box className={styles.fieldLabel}>
                     End Date:
                 </Box>
-                <Box sx={{
-                    border: "0px solid pink",
-                }} className={styles.field}>
+                <Box className={styles.field}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker 
                             value={endDate}
@@ -187,7 +202,6 @@ export default function CreatePoll() {
             </Box>
 
             <Box sx={{fontSize: "20px", margin: "10px", fontWeight: "600"}}>Options:</Box>
-
 
             <Box sx={{
                 display: 'flex',
