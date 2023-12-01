@@ -11,7 +11,11 @@ export default function Home() {
         sx={{
           fontSize: '40px',
           fontWeight: 'bold',
-          margin: '20px',
+          margin: '20px 0px 20px 0px',
+          '@media (max-width: 1000px)': {
+            width: '100%',
+            textAlign: 'left',
+          },
         }}
       >
         Welcome to Caleb's Capstone project. 
@@ -20,7 +24,7 @@ export default function Home() {
         sx={{
           fontSize: '20px',
           maxWidth: '1000px',
-          margin: '20px',
+          margin: '20px 0px 20px 0px',
         }}
       >
         You can use this site to create and share polls using a variety of different voting systems, rather than just a traditional tally or "first past the post" system. Try it out now!

@@ -3,6 +3,7 @@
 import { logout } from '@/actions/actions';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Loading from './Loading';
 
 export default function Logout() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function Logout() {
   })
 
   return (
-    <div>Placeholder</div>
+    <Loading/>
   )
 }
 

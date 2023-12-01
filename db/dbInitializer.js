@@ -2,6 +2,7 @@
 // Runs automatically when server starts up
 
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
 
 console.log("Running dbinitializer");
 
@@ -102,6 +103,61 @@ const createTablesAndData = async () => {
     }
   };
 
+// Creates initial admin and user accounts
+const createAutomaticAccounts = async () => {
+  const pool3 = new Pool({
+    connectionString: process.env.POSTGRES_URL + "?sslmode=require",
+  });
+
+  try {
+    // Connect to the default postgres database
+    const client = await pool3.connect();
+
+    // Create Automatic Admin
+    // Ensure username is unique
+    const { rows: usernameCheck } = await client.query(`SELECT username FROM users WHERE username=$1`, [process.env.AUTOMATIC_ADMIN_USER])
+    if (usernameCheck.length > 0) {
+      console.log('Automatic Admin already exists.');    
+    }else{
+      // Hash password
+      const hashedPassword = await bcrypt.hash(process.env.AUTOMATIC_ADMIN_PW, 10); // 10 is the number of salt rounds
+
+      // Insert new user into the database using parameterized query
+      await client.query(
+        'INSERT INTO users (username, passwordhash, type) VALUES ($1, $2, $3)', 
+        [process.env.AUTOMATIC_ADMIN_USER, hashedPassword, "admin"]
+      );
+      console.log("Automatic Admin created.");
+    }
+
+    // Create Automatic User
+    // Ensure username is unique
+    const { rows: usernameCheck2 } = await client.query(`SELECT username FROM users WHERE username=$1`, [process.env.AUTOMATIC_TEST_USER])
+    if (usernameCheck2.length > 0) {
+      console.log('Automatic Test User already exists.');    
+    }else{
+      // Hash password
+      const hashedPassword2 = await bcrypt.hash(process.env.AUTOMATIC_TEST_PW, 10); // 10 is the number of salt rounds
+
+      // Insert new user into the database using parameterized query
+      await client.query(
+        'INSERT INTO users (username, passwordhash, type) VALUES ($1, $2, $3)', 
+        [process.env.AUTOMATIC_TEST_USER, hashedPassword2, "user"]
+      );
+      console.log("Automatic Test User created.");
+    }
+
+    client.release();
+
+  }catch (error) {
+    console.error('Error creating automatic accounts:', error);
+  } finally {
+    // Close the pool connection
+    pool3.end();
+  }
+
+}
+
 
 // Creates initial database
 const createDatabase = async () => {
@@ -126,10 +182,12 @@ const createDatabase = async () => {
 
       // Create tables
       createTablesAndData();
+      createAutomaticAccounts();
 
     } else {
       console.log(`Database ${process.env.DB_NAME} already exists.`);
       createTablesAndData();
+      createAutomaticAccounts();
     }
 
     // Release the client instance

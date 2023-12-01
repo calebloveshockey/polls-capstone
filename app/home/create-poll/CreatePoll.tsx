@@ -9,7 +9,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { Dayjs } from 'dayjs';
 import { useRouter } from 'next/navigation';
-import ReactiveButton from '@/components/reactiveButton';
+import ReactiveButton from '@/components/ReactiveButton';
 import React from 'react';
 
 export default function CreatePoll() {

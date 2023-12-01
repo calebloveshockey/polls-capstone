@@ -25,10 +25,6 @@
 
 
 Priority:
-- Add Question mark icon on create-poll page that explains how each poll type works
-- Add Question mark icon on poll pages next to a "Type: Ranked" etc. that will explain how the poll system works
-- make navbar have stylized responsive behavior
-- add to database script a creation of an admin account
 - Make sure admin account management page works correctly. 
 - On Account Management page, allow user to remove their account
 - Add Users page that admin can look at all users and search/sort
@@ -57,3 +53,4 @@ Priority:
 - make "Login" in "Login to join the discussion be a link to the login page
 - fix response from approval voter rejecting someone from voting twice. Right now it just says "failed to vote" instead of telling them they can't vote twice.
 - fix double commenting (block submitting another comment while comment button loads)
+- add animated spinner to loading page

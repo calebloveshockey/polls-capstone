@@ -229,7 +229,7 @@ export async function validateUser(){
       const {rows: userData} = await client.query('SELECT username, type FROM users WHERE user_id = $1', [keyCheck.user_id]);
 
       // Ensure existing user account
-      if (userData.length > 0 && userData[0].type === "user"){
+      if (userData.length > 0 && (userData[0].type === "user" || userData[0].type === "admin")){
         // User exists
         console.log("SERVER: User exists and is valid");
         const username = userData[0].username;

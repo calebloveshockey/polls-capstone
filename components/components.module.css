@@ -5,17 +5,54 @@
     margin-bottom: 20px;
     padding: 10px;
 }
+@media screen and (max-width: 600px) {
+    .NavBar {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        max-width: 100%;
+
+        padding: 0px;
+    }
+}
 
 .links{
-    border: 1px solid black;
+    border-radius: 20px;
+    background-color: white;
+    box-shadow: 0 0 0.7rem 0.6rem rgba(0, 0, 0, 0.1);
+
     display: flex;
-    height: 70px;
-    margin-left: 5
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 70px;
+    height: fit-content;
+    
+    margin-left: 5;
+    padding: 0px 10px 0px 10px;
+}@media screen and (max-width: 400px) {
+    .links {
+        flex-wrap: wrap;
+        margin: 0;
+    }
 }
 
 .link{
-    color: red;
-    margin: 20px;
+    color: var(--main-blue);
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 16px;
+
+    padding: 10px;
+    margin: 0px 10px 0px 10px;
+
+    background-color: white;
+    transition: background-color ease 0.5s,
+}
+.link:hover{
+    background-color: lightgray;
 }
 
 .logo{
@@ -52,9 +89,6 @@
     margin: 5px;
 }
 
-.field{
-
-}
 
 .passwordContainer{
     display: flex;
