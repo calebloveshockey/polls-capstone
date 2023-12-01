@@ -2,7 +2,7 @@
 
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Button, ClickAwayListener, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField, Tooltip, Typography, Zoom } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, Help } from '@mui/icons-material';
 import { castTradVote, getPollData, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -38,7 +38,7 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
     const [isVoteSuccessful, setIsVoteSuccessful] = useState<boolean>(false);
     const [isResultsProcessing, setIsResultsProcessing] = useState<boolean>(false);
 
-    const [pollTypeTipOpen, setPollTypeTipOpen] = useState(false);
+    const [pollTipOpen, setPollTipOpen] = useState(false);
 
     // Retrieve poll data
     useEffect( () => {
@@ -113,39 +113,46 @@ export default function TradVoter({ shareCode }: PollVoterProps) {
                     fontWeight: "500",
                 }}>
                     {pollData.question}
-                    <Tooltip
-                        title={
-                            <React.Fragment>
-                                <Typography color="inherit">Traditional Voting:</Typography>
-                                {'This is a traditional poll where the option with the most votes wins. This is commonly known as "First-past-the-post" voting.'}
-                            </React.Fragment>
-                        }
-                        placement="right"
-                        onClose={() => setPollTypeTipOpen(false)}
-                        open={pollTypeTipOpen}
-                        PopperProps={{
-                            sx: {...{
-                                color: 'rgba(100, 0, 0, 0.87)',
-                                maxWidth: 220,
-                                fontSize: '15',
-                                '.MuiTooltip-tooltip': {
-                                    backgroundColor: 'var(--main-blue)'
-                                }
+                    <ClickAwayListener onClickAway={() => setPollTipOpen(false)}>
+                        <Tooltip
+                            title={
+                                <React.Fragment>
+                                    <Typography color="inherit">Traditional Voting:</Typography>
+                                    {'This is a traditional poll where the option with the most votes wins. This is commonly known as "First-past-the-post" voting.'}
+                                </React.Fragment>
+                            }
+                            placement="right"
+                            onClose={() => setPollTipOpen(false)}
+                            open={pollTipOpen}
+                            disableFocusListener
+                            disableHoverListener
+                            disableTouchListener
+                            TransitionComponent={Zoom}
+                            arrow
+                            PopperProps={{
+                                sx: {...{
+                                    color: 'rgba(100, 0, 0, 0.87)',
+                                    maxWidth: 220,
+                                    fontSize: '15',
+                                    '.MuiTooltip-tooltip': {
+                                        backgroundColor: 'var(--main-blue)'
+                                    }
+                                }}
                             }}
-                        }}
-                    >
-                        <IconButton
-                            sx={{
-                                marginLeft: '5px',
-                            }}
-                            onClick={() => setPollTypeTipOpen(true)}
                         >
-                            <Help
-                                fontSize='medium'
-                                color='info'
-                            />
-                        </IconButton>
-                    </Tooltip>
+                            <IconButton
+                                sx={{
+                                    marginLeft: '5px',
+                                }}
+                                onClick={() => setPollTipOpen(!pollTipOpen)}
+                            >
+                                <Help
+                                    fontSize='large'
+                                    color='info'
+                                />
+                            </IconButton>
+                        </Tooltip>
+                    </ClickAwayListener>
                 </Box>
 
                 <Box sx={{

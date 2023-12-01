@@ -2,11 +2,14 @@
 
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, TextField } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, TextField } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close } from '@mui/icons-material';
-import { changePassword, getUserData} from '@/actions/actions';
+import { changePassword, getUserData, removeOwnAccount} from '@/actions/actions';
+import ReactiveButton from '@/components/ReactiveButton';
+import { useRouter } from 'next/navigation';
 
 export default function AccountManagement() {
+    const router = useRouter();
 
     const [username, setUsername] = useState("");
     const [type, setType] = useState("");
@@ -18,6 +21,14 @@ export default function AccountManagement() {
 
     const [passStatus, setPassStatus] = useState("");
     const [passStatusMessage, setPassStatusMessage] = useState("");
+
+    const [isChangePwProcessing, setIsChangePwProcessing] = useState<boolean>(false);
+
+    const [isAccountDeleted, setIsAccountDeleted] = useState<boolean>(false);
+    const [isDeletionProcessing, setIsDeletionProcessing] = useState<boolean>(false);
+    const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
+    const [deletionPw, setDeletionPw] = useState<string>("");
+    const [showDeletionPw, setShowDeletionPw] = useState<boolean>(false);
 
   
     // Retrieve user data
@@ -53,7 +64,7 @@ export default function AccountManagement() {
     }
 
     const handleChangePassword = async () => {
-        console.log("Attempting to change password");
+        setIsChangePwProcessing(true);
         // Confirm that newPass and confirmNewPass are the same
         if(newPass === confirmNewPass){
             // Change password
@@ -63,6 +74,9 @@ export default function AccountManagement() {
             if(resp.status === "SUCCESS"){
                 setPassStatus("SUCCESS");
                 setPassStatusMessage("Password changed successfully!");
+                setCurPass("");
+                setNewPass("");
+                setConfirmNewPass("");
             }else{
                 setPassStatus("FAIL");
                 setPassStatusMessage("Password change failed.");
@@ -71,6 +85,29 @@ export default function AccountManagement() {
             setPassStatus("FAIL");
             setPassStatusMessage("Passwords do not match.");
         }
+        setIsChangePwProcessing(false);
+
+        setTimeout(() => setPassStatus(""), 3000);
+    }
+
+    const confirmAccountDeletion = async (pw: string) => {
+        setIsConfirmationOpen(false);
+        setIsDeletionProcessing(true);
+
+        const res = await removeOwnAccount(pw);
+        if(res.status === "SUCCESS"){
+            setIsAccountDeleted(true);
+            router.push('/logout');
+        }
+
+        setIsDeletionProcessing(false);
+    }
+    const closeConfirmation = () => {
+        setDeletionPw("");
+        setIsConfirmationOpen(false);
+    }
+    const handleDeletePass = (newValue: SetStateAction<string>) => {
+        setDeletionPw(newValue);
     }
 
 
@@ -94,6 +131,7 @@ export default function AccountManagement() {
             <InputLabel htmlFor={"curpass"}>Current Password</InputLabel>
             <FilledInput
                 id={"curpass"}
+                value={curPass}
                 type={showPassword ? 'text' : 'password'}
                 inputProps={{maxLength: 100}}
                 onChange={(event) => handleCurPass(event.target.value)}
@@ -118,6 +156,7 @@ export default function AccountManagement() {
             <InputLabel htmlFor={"newpass"}>New Password</InputLabel>
             <FilledInput
                 id={"newpass"}
+                value={newPass}
                 type={showPassword ? 'text' : 'password'}
                 inputProps={{maxLength: 100}}
                 onChange={(event) => handleNewPass(event.target.value)}
@@ -142,6 +181,7 @@ export default function AccountManagement() {
             <InputLabel htmlFor={"confirmpass"}>Confirm New Password</InputLabel>
             <FilledInput
                 id={"confirmpass"}
+                value={confirmNewPass}
                 type={showPassword ? 'text' : 'password'}
                 inputProps={{maxLength: 100}}
                 onChange={(event) => handleConfirmNewPass(event.target.value)}
@@ -159,24 +199,66 @@ export default function AccountManagement() {
             />
             </FormControl>
 
-            <Button
-                className={styles.loginButton}
+            <ReactiveButton
+                text="Change Password"
+                isSuccess={passStatus === "SUCCESS"}
+                isProcessing={isChangePwProcessing}
                 onClick={handleChangePassword}
-                variant="contained"
-            >Change Password</Button>
-
-            <Box sx={{
-                margin: "5px", 
-            }}>
-                {passStatus === "SUCCESS" && <CheckBox sx={{color: "green"}} fontSize='large'/>}
-                {passStatus === "FAIL" && <Close sx={{color: "red"}} fontSize='large'/>}
-            </Box>
+            />
 
             <Box sx={{
                 margin: "5px",
             }}>
                 {passStatusMessage}
             </Box>
+
+            <ReactiveButton
+                text="Delete Account"
+                isSuccess={isAccountDeleted}
+                isProcessing={isDeletionProcessing}
+                onClick={() => setIsConfirmationOpen(true)}
+            />
+
+            <Dialog
+                open={isConfirmationOpen}
+                onClose={closeConfirmation}
+            >
+                <DialogTitle>Are you sure you want to delete your account?</DialogTitle>   
+                <DialogContent>
+                    <DialogContentText>Confirm you password.</DialogContentText>
+                    <FormControl 
+                        variant="filled"
+                        className={styles.passwordBox}
+                    >
+                    <InputLabel htmlFor={"deletepass"}></InputLabel>
+                    <FilledInput
+                        id={"deletepass"}
+                        value={deletionPw}
+                        type={showDeletionPw ? 'text' : 'password'}
+                        inputProps={{maxLength: 100}}
+                        onChange={(event) => handleDeletePass(event.target.value)}
+                        endAdornment={
+                            <InputAdornment position="end">
+                                <IconButton
+                                    aria-label="toggle password visibility"
+                                    onClick={() => setShowDeletionPw(!showDeletionPw)}
+                                    edge="end"
+                                >
+                                    {showDeletionPw ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        }
+                    />
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeConfirmation}>Cancel</Button>
+                    <Button onClick={() => confirmAccountDeletion(deletionPw)}>Confirm</Button>
+                </DialogActions>
+            </Dialog>
+
+
+
         </>
     );
 }

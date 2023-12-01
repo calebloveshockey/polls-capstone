@@ -257,6 +257,50 @@ export async function validateUser(){
 }
 
 
+// Validate admin account
+export async function validateAdmin(){
+  console.log("SERVER: Entering validateAdmin");
+
+  // Check for valid key
+  const keyCheck = await validateKey();
+  if (keyCheck.status === "SUCCESS"){
+    // valid key found
+    try {
+      const client = await pool.connect();
+
+      // Fetch user
+      const {rows: userData} = await client.query('SELECT username, type FROM users WHERE user_id = $1', [keyCheck.user_id]);
+
+      // Ensure existing user account
+      if (userData.length > 0 && userData[0].type === "admin"){
+        // Such an admin exists
+        console.log("SERVER: Admin exists and is valid");
+        const username = userData[0].username;
+        client.release();
+        return {status: 'SUCCESS', username: username, user_id: keyCheck.user_id}
+
+      }else{
+        // No such admin exists
+        console.log("SERVER: No such admin exists.");
+        client.release();
+        return {status: 'FAILURE'};
+      }
+  
+    }
+    catch (error) {
+      console.error('SERVER: Error validating admin account: ', error);
+      return {status: 'ERROR', error: error};
+    }
+
+  // No valid key found
+  }else{
+    console.error('SERVER: User does not have a valid key.');
+    return {status: 'FAILURE'};
+  }
+}
+
+
+
 // Simple function to delete the key from the database and delete the corresponding cookie
 export async function logout(){
   console.log("SERVER: logging out");
@@ -279,6 +323,48 @@ export async function logout(){
   }
 
   cookies().delete("key");
+}
+
+
+// If a user wants to remove their own account
+export async function removeOwnAccount(pw: string){
+  console.log("SERVER: entering removeOwnAccount");
+
+  // Validate user to confirm they are authorized and to get username
+  const validation = await validateUser();
+  if(validation.status && validation.status === "SUCCESS" && validation.username){
+
+    try{
+      const client = await pool.connect();
+
+      // Get passwordhash from database
+      const {rows: userData} = await client.query('SELECT passwordhash FROM users WHERE username = $1', [validation.username])
+      if (userData.length > 0) {
+
+        // Check that pw matches database password
+        const isPasswordMatch = await bcrypt.compare(pw, userData[0].passwordhash);
+        if (isPasswordMatch) {
+            
+          // Remove account from DB
+          const res = await client.query('DELETE FROM users WHERE ctid IN (SELECT ctid FROM users WHERE username = $1 LIMIT 1)', [validation.username]);
+          // Check that deletion was successful:
+          if(res.rowCount > 0){
+            console.log("SERVER: User was successfully deleted.");
+            client.release();
+            return {status: "SUCCESS"};
+          }
+        }
+      }
+
+      client.release();
+    }
+    catch(error){
+      console.log('SERVER: Error getting user data: ', error);
+    }
+  }
+
+  console.log("SERVER: User did not get deleted.");
+  return {status: "FAILURE"};
 }
 
 

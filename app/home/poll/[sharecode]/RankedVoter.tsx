@@ -2,7 +2,7 @@
 
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Button, ClickAwayListener, FilledInput, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, Link, MenuItem, Radio, RadioGroup, Select, SelectChangeEvent, TextField, Tooltip, Typography, Zoom } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, FullscreenExitRounded, ArrowCircleDown, ArrowCircleUp, Help } from '@mui/icons-material';
 import { castRankedVote, getPollData, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -42,7 +42,7 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
     const [isVoteSuccessful, setIsVoteSuccessful] = useState<boolean>(false);
     const [isResultsProcessing, setIsResultsProcessing] = useState<boolean>(false);
 
-    const [pollTypeTipOpen, setPollTypeTipOpen] = useState(false);
+    const [pollTipOpen, setPollTipOpen] = useState(false);
 
     // Retrieve poll data
     useEffect( () => {
@@ -233,39 +233,46 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                     fontWeight: "500",
                 }}>
                     {pollData.question}
-                    <Tooltip
-                        title={
-                            <React.Fragment>
-                                <Typography color="inherit">Ranked Voting:</Typography>
-                                {'Rank the options in order of your preference. Utilizes the STV (Single Transferable Vote) system. If no clear winner emerges, the least popular option is eliminated, and their votes are transferred to the next preference. This process repeats until a winner is determined.'}
-                            </React.Fragment>
-                        }
-                        placement="right"
-                        onClose={() => setPollTypeTipOpen(false)}
-                        open={pollTypeTipOpen}
-                        PopperProps={{
-                            sx: {...{
-                                color: 'rgba(100, 0, 0, 0.87)',
-                                maxWidth: 220,
-                                fontSize: '15',
-                                '.MuiTooltip-tooltip': {
-                                    backgroundColor: 'var(--main-blue)'
-                                }
+                    <ClickAwayListener onClickAway={() => setPollTipOpen(false)}>
+                        <Tooltip
+                            title={
+                                <React.Fragment>
+                                    <Typography color="inherit">Ranked Voting:</Typography>
+                                    {'Rank the options in order of your preference. Utilizes the STV (Single Transferable Vote) system. If no clear winner emerges, the least popular option is eliminated, and their votes are transferred to the next preference. This process repeats until a winner is determined.'}
+                                </React.Fragment>
+                            }
+                            placement="right"
+                            onClose={() => setPollTipOpen(false)}
+                            open={pollTipOpen}
+                            disableFocusListener
+                            disableHoverListener
+                            disableTouchListener
+                            TransitionComponent={Zoom}
+                            arrow
+                            PopperProps={{
+                                sx: {...{
+                                    color: 'rgba(100, 0, 0, 0.87)',
+                                    maxWidth: 220,
+                                    fontSize: '15',
+                                    '.MuiTooltip-tooltip': {
+                                        backgroundColor: 'var(--main-blue)'
+                                    }
+                                }}
                             }}
-                        }}
-                    >
-                        <IconButton
-                            sx={{
-                                marginLeft: '5px',
-                            }}
-                            onClick={() => setPollTypeTipOpen(true)}
                         >
-                            <Help
-                                fontSize='medium'
-                                color='info'
-                            />
-                        </IconButton>
-                    </Tooltip>
+                            <IconButton
+                                sx={{
+                                    marginLeft: '5px',
+                                }}
+                                onClick={() => setPollTipOpen(!pollTipOpen)}
+                            >
+                                <Help
+                                    fontSize='large'
+                                    color='info'
+                                />
+                            </IconButton>
+                        </Tooltip>
+                    </ClickAwayListener>
                 </Box>
 
                 <Box sx={{

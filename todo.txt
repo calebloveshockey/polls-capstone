@@ -30,11 +30,11 @@ Priority:
 - Add Users page that admin can look at all users and search/sort
 - On users page, admin can click to visit a user's account page and can delete their account.
 - Add polls page that any account can view: shows their list of polls
+- Admin version of Polls page shows all polls on the samesite
+- Add admin summary page: Shows number of users, and number of polls created, and number of votes counted
 - When the user that created a poll is on the poll page, show a button that will take them to an edit-poll page
 - Edit poll page: Change title/description text, or delete the poll altogether
 - Admin can access the edit poll page of any poll
-- Admin version of Polls page shows all polls on the samesite
-- Add admin summary page: Shows number of users, and number of polls created, and number of votes counted
 - Change the colors of the voting bars on results page
 - need to test and style for mobile, since technically that would be the primary audience
 - make sure the close date field is not necessary in order to create a poll

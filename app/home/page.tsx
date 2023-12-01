@@ -11,10 +11,11 @@ export default function Home() {
         sx={{
           fontSize: '40px',
           fontWeight: 'bold',
-          margin: '20px 0px 20px 0px',
+          margin: '20px 5px 20px 5px',
           '@media (max-width: 1000px)': {
             width: '100%',
             textAlign: 'left',
+            margin: '0px',
           },
         }}
       >
@@ -24,7 +25,7 @@ export default function Home() {
         sx={{
           fontSize: '20px',
           maxWidth: '1000px',
-          margin: '20px 0px 20px 0px',
+          margin: '20px 5px 20px 5px',
         }}
       >
         You can use this site to create and share polls using a variety of different voting systems, rather than just a traditional tally or "first past the post" system. Try it out now!

@@ -6,7 +6,7 @@
     padding-right: 5%;
 }@media screen and (max-width: 600px) {
     .MainLayout {
-        padding: 5px;
+        padding: 0px;
     }
 }
 

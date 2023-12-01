@@ -36,7 +36,7 @@ const createTablesAndData = async () => {
         key VARCHAR(200) NOT NULL,
         user_id INTEGER NOT NULL,
         datetime_issued TIMESTAMP DEFAULT NOW(),
-        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
       )`);
       console.log('Table "keys" created successfully.');
 
@@ -51,7 +51,7 @@ const createTablesAndData = async () => {
           close_date TIMESTAMP NOT NULL,
           share_link VARCHAR(500) NOT NULL,
           author INTEGER NOT NULL,
-          FOREIGN KEY (author) REFERENCES users(user_id)
+          FOREIGN KEY (author) REFERENCES users(user_id) ON DELETE CASCADE
         )`);
         console.log('Table "polls" created successfully.');
 
@@ -61,7 +61,7 @@ const createTablesAndData = async () => {
           option_id SERIAL PRIMARY KEY,
           option_name VARCHAR(1000) NOT NULL,
           poll_id INTEGER NOT NULL,
-          FOREIGN KEY (poll_id) REFERENCES polls(poll_id)
+          FOREIGN KEY (poll_id) REFERENCES polls(poll_id) ON DELETE CASCADE
         )`);
         console.log('Table "options" created successfully.');
 
@@ -73,8 +73,8 @@ const createTablesAndData = async () => {
           option_id INTEGER NOT NULL,
           responder INTEGER NOT NULL,
           rank INTEGER,
-          FOREIGN KEY (poll_id) REFERENCES polls(poll_id),
-          FOREIGN KEY (option_id) REFERENCES options(option_id)
+          FOREIGN KEY (poll_id) REFERENCES polls(poll_id) ON DELETE CASCADE,
+          FOREIGN KEY (option_id) REFERENCES options(option_id) ON DELETE CASCADE
         )`);
         console.log('Table "responses" created successfully.');
   
@@ -87,9 +87,9 @@ const createTablesAndData = async () => {
           user_id INTEGER NOT NULL,
           poll_id INTEGER NOT NULL,
           parent_comment INTEGER,
-          FOREIGN KEY (user_id) REFERENCES users(user_id),
-          FOREIGN KEY (poll_id) REFERENCES polls(poll_id),
-          FOREIGN KEY (parent_comment) REFERENCES comments(comment_id)
+          FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+          FOREIGN KEY (poll_id) REFERENCES polls(poll_id) ON DELETE CASCADE,
+          FOREIGN KEY (parent_comment) REFERENCES comments(comment_id) ON DELETE CASCADE
         )`);
         console.log('Table "comments" created successfully.');
 

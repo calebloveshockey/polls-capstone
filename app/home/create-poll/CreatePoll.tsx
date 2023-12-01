@@ -2,7 +2,7 @@
 
 import { SetStateAction, useEffect, useState } from 'react';
 import styles from './page.module.css';
-import { Box, Button, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Button, ClickAwayListener, FilledInput, FormControl, IconButton, InputAdornment, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Tooltip, Typography, Zoom } from '@mui/material';
 import { VisibilityOff, Visibility, CheckBox, Close, RemoveCircle, AddCircle, Help } from '@mui/icons-material';
 import { changePassword, createPoll, getUserData} from '@/actions/actions';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -149,41 +149,48 @@ export default function CreatePoll() {
                             <MenuItem value={"Approval"}>Approval</MenuItem>
                         </Select>
                     </FormControl>
-                    <Tooltip
-                        title={
-                            <React.Fragment>
-                                <Typography color="inherit">Poll Types:</Typography>
-                                <b>{'Traditional: '}</b>{'A standard poll where the option with the most votes wins. This is commonly known as "First-past-the-post" voting.'}<br></br><br></br>
-                                <b>{'Ranked: '}</b>{'Voters rank options in order of preference. Utilizes the STV (Single Transferable Vote) system. If no clear winner emerges, the least popular option is eliminated, and their votes are transferred to the next preference. This process repeats until a winner is determined.'}<br></br><br></br>
-                                <b>{'Approval: '}</b>{'Voters select any number of options they approve. The option receiving the highest overall approval wins.'}
-                            </React.Fragment>
-                        }
-                        placement="right"
-                        onClose={() => setPollTipOpen(false)}
-                        open={pollTipOpen}
-                        PopperProps={{
-                            sx: {...{
-                                color: 'rgba(100, 0, 0, 0.87)',
-                                maxWidth: 220,
-                                fontSize: '15',
-                                '.MuiTooltip-tooltip': {
-                                    backgroundColor: 'var(--main-blue)'
-                                }
+                    <ClickAwayListener onClickAway={() => setPollTipOpen(false)}>
+                        <Tooltip
+                            title={
+                                <React.Fragment>
+                                    <Typography color="inherit">Poll Types:</Typography>
+                                    <b>{'Traditional: '}</b>{'A standard poll where the option with the most votes wins. This is commonly known as "First-past-the-post" voting.'}<br></br><br></br>
+                                    <b>{'Ranked: '}</b>{'Voters rank options in order of preference. Utilizes the STV (Single Transferable Vote) system. If no clear winner emerges, the least popular option is eliminated, and their votes are transferred to the next preference. This process repeats until a winner is determined.'}<br></br><br></br>
+                                    <b>{'Approval: '}</b>{'Voters select any number of options they approve. The option receiving the highest overall approval wins.'}
+                                </React.Fragment>
+                            }
+                            placement="right"
+                            onClose={() => setPollTipOpen(false)}
+                            open={pollTipOpen}
+                            disableFocusListener
+                            disableHoverListener
+                            disableTouchListener
+                            TransitionComponent={Zoom}
+                            arrow
+                            PopperProps={{
+                                sx: {...{
+                                    color: 'rgba(100, 0, 0, 0.87)',
+                                    maxWidth: 220,
+                                    fontSize: '15',
+                                    '.MuiTooltip-tooltip': {
+                                        backgroundColor: 'var(--main-blue)'
+                                    }
+                                }}
                             }}
-                        }}
-                    >
-                        <IconButton
-                            sx={{
-                                marginLeft: '5px',
-                            }}
-                            onClick={() => setPollTipOpen(true)}
                         >
-                            <Help
-                                fontSize='large'
-                                color='info'
-                            />
-                        </IconButton>
-                    </Tooltip>
+                            <IconButton
+                                sx={{
+                                    marginLeft: '5px',
+                                }}
+                                onClick={() => setPollTipOpen(!pollTipOpen)}
+                            >
+                                <Help
+                                    fontSize='large'
+                                    color='info'
+                                />
+                            </IconButton>
+                        </Tooltip>
+                    </ClickAwayListener>
                 </Box>
             </Box>
 
