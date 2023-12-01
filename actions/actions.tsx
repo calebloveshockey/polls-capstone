@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import bcrypt from 'bcrypt';
 import { cookies } from 'next/headers'
 import { v4 as uuidv4 } from 'uuid';
+import { TrySharp } from "@mui/icons-material";
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL + "?sslmode=require",
@@ -368,6 +369,60 @@ export async function removeOwnAccount(pw: string){
 }
 
 
+// Admin remove an account
+export async function removeUserAccount(pw: string, userToDelete: string){
+  console.log("SERVER: entering removeUserAccount");
+
+  // Validate admin
+  const validation = await validateAdmin();
+  if(validation.status && validation.status === "SUCCESS" && validation.username){
+
+    try{
+      const client = await pool.connect();
+
+      // Get passwordhash from database
+      const {rows: adminData} = await client.query('SELECT passwordhash FROM users WHERE username = $1', [validation.username])
+      if (adminData.length > 0) {
+
+        // Check that pw matches database password
+        const isPasswordMatch = await bcrypt.compare(pw, adminData[0].passwordhash);
+        if (isPasswordMatch) {
+
+          // Get userToDelete details
+          const { rows: userToDeleteData } = await client.query('SELECT user_id, type FROM users WHERE username = $1', [userToDelete]);
+          if (userToDeleteData.length === 0) {
+            client.release();
+            return { status: "FAILURE", error: "User not found." };
+          }
+
+          // Check if userToDelete is not an admin
+          if (userToDeleteData[0].type === "admin") {
+            client.release();
+            return { status: "FAILURE", error: "Cannot delete an admin account." };
+          }
+
+          // Proceed with deletion
+          const deleteResult = await client.query('DELETE FROM users WHERE user_id = $1', [userToDeleteData[0].user_id]);
+          client.release();
+          if (deleteResult.rowCount > 0) {
+            return { status: "SUCCESS" };
+          } else {
+            return { status: "FAILURE", error: "Deletion failed." };
+          }
+        }
+      }
+      client.release();
+    }
+    catch(error){
+      console.log('SERVER: Error getting user data: ', error);
+    }
+  }
+
+  console.log("SERVER: User did not get deleted.");
+  return {status: "FAILURE", error: "Unknown error occured while trying to delete user."};
+}
+
+
 
 // Gets data associated with user
 export async function getUserData(){
@@ -390,7 +445,6 @@ export async function getUserData(){
           type: userData[0].type,
         }
       }
-
 
       client.release();
     }
@@ -1154,4 +1208,58 @@ export async function addComment(shareCode: string, newComment: string, replying
   }
 
   return{status: "FAILURE"}
+}
+
+
+// Get list of all users (admin only)
+export async function getAllUsers(){
+  console.log("SERVER: entering getAllUsers");
+
+  try{ const client = await pool.connect();
+
+    // Validate that this is an admin account
+    const validation = await validateAdmin();
+    if(validation.status === "SUCCESS"){
+      // Get users
+      const {rows: userList} = await client.query("SELECT username, type FROM users WHERE username IS NOT NULL");
+      client.release();
+      return {status: "SUCCESS", listOfUsers: userList};
+    }else{
+      client.release();
+      return {status: "FAILURE", error: "Only admins can access this data."}
+    }
+
+  } catch(error){
+    console.log("SERVER: Error getting all users: " + error);
+  }
+
+  return {status: "FAILURE", error: "Server failed to retrieve all users."};
+}
+
+
+// Get details of a specific user (admin only)
+export async function getUserDetails(username: string){
+  console.log("SERVER: entering getUserDetails for user: " + username);
+
+  try{ const client = await pool.connect();
+
+    // Validate that this is an admin account
+    const validation = await validateAdmin();
+    if(validation.status === "SUCCESS"){
+      // Get user
+      const {rows: userData} = await client.query("SELECT user_id, username, type FROM users WHERE username = $1", [username]);
+      if(userData.length === 1){
+        client.release();
+        return {status: "SUCCESS", userDetails: userData[0]};
+      }
+    }else{
+      client.release();
+      return {status: "FAILURE", error: "Only admins can access this data."}
+    }
+
+  } catch(error){
+    console.log("SERVER: Error getting user: " + error);
+  }
+
+  return {status: "FAILURE", error: "Server failed to retrieve user."};
 }

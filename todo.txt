@@ -25,8 +25,6 @@
 
 
 Priority:
-- Make sure admin account management page works correctly. 
-- On Account Management page, allow user to remove their account
 - Add Users page that admin can look at all users and search/sort
 - On users page, admin can click to visit a user's account page and can delete their account.
 - Add polls page that any account can view: shows their list of polls

@@ -4,11 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import styles from './components.module.css';
 import { useEffect, useState } from 'react';
-import { validateUser } from '@/actions/actions';
+import { validateAdmin, validateUser } from '@/actions/actions';
 
 export default function NavBar() {
 
   const [user, setUser] = useState();
+  const [admin, setAdmin] = useState();
 
   // Validate session
   useEffect(() => {
@@ -18,6 +19,12 @@ export default function NavBar() {
         if (validation.status && validation.status === 'SUCCESS') {
           setUser(validation.username);
         }
+
+        const adminValidation = await validateAdmin();
+        if ( adminValidation.status &&  adminValidation.status === 'SUCCESS') {
+          setAdmin( adminValidation.username);
+        }
+
       } catch (error) {
         console.error('Error during validation:', error);
       }
@@ -37,6 +44,12 @@ export default function NavBar() {
       />
       <div className={styles.links}>
         <Link href='/home' className={styles.link}>Home</Link>
+
+        { admin &&
+          <>
+            <Link href='/home/admin/users' className={styles.link}>Users</Link>
+          </>
+        }
 
         {user ? 
           <>

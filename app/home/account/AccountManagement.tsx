@@ -225,7 +225,7 @@ export default function AccountManagement() {
             >
                 <DialogTitle>Are you sure you want to delete your account?</DialogTitle>   
                 <DialogContent>
-                    <DialogContentText>Confirm you password.</DialogContentText>
+                    <DialogContentText>Confirm your password.</DialogContentText>
                     <FormControl 
                         variant="filled"
                         className={styles.passwordBox}
