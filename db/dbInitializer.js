@@ -120,7 +120,7 @@ const createAutomaticAccounts = async () => {
       console.log('Automatic Admin already exists.');    
     }else{
       // Hash password
-      const hashedPassword = await bcrypt.hash(process.env.AUTOMATIC_ADMIN_PW, 10); // 10 is the number of salt rounds
+      const hashedPassword = bcrypt.hash(process.env.AUTOMATIC_ADMIN_PW, 10); // 10 is the number of salt rounds
 
       // Insert new user into the database using parameterized query
       await client.query(
