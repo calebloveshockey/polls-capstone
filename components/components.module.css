@@ -25,6 +25,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
 
     min-height: 70px;
     height: fit-content;
@@ -33,7 +34,6 @@
     padding: 0px 10px 0px 10px;
 }@media screen and (max-width: 400px) {
     .links {
-        flex-wrap: wrap;
         margin: 0;
     }
 }

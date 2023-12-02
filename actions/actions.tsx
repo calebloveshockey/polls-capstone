@@ -1313,16 +1313,56 @@ export async function getPolls(){
 
 
       }else{
-        client.release();
-        return {status: "FAILUIRE", error: "You have not created any polls yet."};
+        return {status: "FAILURE", error: "You have not created any polls yet."};
       }
     }else{
       client.release();
       return {status: "FAILURE", error: "Only users can access this data."};
     }
   } catch(error){
-    console.log("SERVER: Error getting all users: " + error);
+    console.log("SERVER: Error getting all user's polls: " + error);
   }
 
-  return {status: "FAILURE", error: "Server failed to retrieve all users."};
+  return {status: "FAILURE", error: "Server failed to retrieve all users's polls."};
+}
+
+
+// Get list of all polls on the site -- admin only
+export async function getAllPolls(){
+  console.log("SERVER: entering getAllPolls");
+
+  try{ const client = await pool.connect();
+
+    // Validate that this is an admin
+    const validation = await validateAdmin();
+    if(validation.status === "SUCCESS"){
+
+      // Get all polls
+      const {rows: pollsList} = await client.query("SELECT p.poll_id, p.question, p.type,p.create_date, p.close_date, p.share_link, u.username FROM polls p INNER JOIN users u ON p.author = u.user_id");
+      client.release();
+
+      if(pollsList.length > 0){
+
+        // Get number of responses for each poll in pollsList using getNumResponses(poll_id), then return that plus the other fields we got from the DB
+        const pollsWithResponses = await Promise.all(
+          pollsList.map(async (poll) => {
+            const numResponses = await getNumResponses(poll.poll_id);
+            return {...poll, numResponses}
+         }));
+
+         return {status: "SUCCESS", polls: pollsWithResponses}
+
+
+      }else{
+        return {status: "FAILURE", error: "No polls created yet."};
+      }
+    }else{
+      client.release();
+      return {status: "FAILURE", error: "Only admins can access this data."};
+    }
+  } catch(error){
+    console.log("SERVER: Error getting all polls: " + error);
+  }
+
+  return {status: "FAILURE", error: "Server failed to retrieve all polls."};
 }

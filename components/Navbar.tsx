@@ -48,6 +48,7 @@ export default function NavBar() {
         { admin &&
           <>
             <Link href='/home/admin/users' className={styles.link}>Users</Link>
+            <Link href='/home/admin/polls' className={styles.link}>Polls - Admin</Link>
           </>
         }
 

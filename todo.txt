@@ -25,7 +25,6 @@
 
 
 Priority:
-- Add polls page that any account can view: shows their list of polls
 - Admin version of Polls page shows all polls on the samesite
 - Add admin summary page: Shows number of users, and number of polls created, and number of votes counted
 - When the user that created a poll is on the poll page, show a button that will take them to an edit-poll page
