@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import styles from './page.module.css'
 import PollsList from './PollsList';
-export default function Users() {
+export default function Polls() {
 
   return (
     <div className={styles.pollsContent}>

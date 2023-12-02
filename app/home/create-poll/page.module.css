@@ -7,6 +7,10 @@
     flex-direction: column;
     justify-self: center;
     align-items: center;
+}@media screen and (max-width: 600px) {
+    .content{
+        width: 100%;
+    }
 }
 
 .header{
@@ -24,6 +28,10 @@
     width: 100%;
     grid-template-columns: 20% 80%;
     margin: 10px;
+}@media screen and (max-width: 600px) {
+    .fieldBox{
+        grid-template-columns: 40% 60%;
+    }
 }
 
 .fieldLabel{

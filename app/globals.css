@@ -6,16 +6,27 @@
   --main-blue: #007bff;
   --dark-main-blue: #0056b3;
 
-  --poll-color-1: 158, 124, 221; /* Soft Purple */
-  --poll-color-2: 98, 179, 170; /* Soft Teal */
-  --poll-color-3: 224, 155, 112; /* Soft Orange */
-  --poll-color-4: 173, 206, 183; /* Soft Sage Green */
-  --poll-color-5: 255, 188, 117; /* Soft Peach */
-  --poll-color-6: 138, 201, 211; /* Soft Sky Blue */
-  --poll-color-7: 222, 147, 95;  /* Soft Tan */
-  --poll-color-8: 201, 150, 167; /* Soft Rose */
-  --poll-color-9: 180, 201, 219; /* Soft Lavender */
-  --poll-color-10: 155, 221, 183; /* Soft Mint */  
+  --poll-color-1: 38, 121, 255; /* Blue */
+  --poll-color-2: 255, 36, 36; /* Red */
+  --poll-color-3: 255, 149, 43; /* Orange */
+  --poll-color-4: 255, 223, 18; /* Yellow*/
+  --poll-color-5: 182, 240, 58; /* Lime */
+  --poll-color-6: 18, 201, 30; /* Dark Green */
+  --poll-color-7: 21, 237, 162;  /* Teal */
+  --poll-color-8: 21, 226, 237; /* Baby Blue */
+  --poll-color-9: 187, 84, 255; /* Purple */
+  --poll-color-10: 237, 62, 220; /* Magenta */  
+
+  --comment-color-1: 158, 124, 221; /* Soft Purple */
+  --comment-color-2: 98, 179, 170; /* Soft Teal */
+  --comment-color-3: 224, 155, 112; /* Soft Orange */
+  --comment-color-4: 173, 206, 183; /* Soft Sage Green */
+  --comment-color-5: 255, 188, 117; /* Soft Peach */
+  --comment-color-6: 138, 201, 211; /* Soft Sky Blue */
+  --comment-color-7: 222, 147, 95;  /* Soft Tan */
+  --comment-color-8: 201, 150, 167; /* Soft Rose */
+  --comment-color-9: 180, 201, 219; /* Soft Lavender */
+  --comment-color-10: 155, 221, 183; /* Soft Mint */
 }
 
 * {

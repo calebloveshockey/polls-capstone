@@ -295,6 +295,9 @@ export default function RankedVoter({ shareCode }: PollVoterProps) {
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 marginRight: '100px',
+                                '@media (max-width: 700px)': {
+                                    marginRight: '0px',
+                                },
                             }}
                             key={opt.option_id}
                         >

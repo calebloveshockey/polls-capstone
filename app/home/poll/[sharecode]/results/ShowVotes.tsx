@@ -78,12 +78,25 @@ export default function ShowVotes({ shareCode }: ShowVoteProps) {
         setTimeout(() => setIsAnimating(false), 2000);
     };
 
+    // Helper function to determine a "random" starting index for color determination
+    // Will always return the same number for the same string
+    // Returns number from 1 to 10
+    function customHash(str: string) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = (hash << 5) - hash + char;
+        }
+        // Ensure the result is positive and within the range [1, 10]
+        return ((hash & 0x7FFFFFFF) % 10) + 1;
+    }
+
 
     return (
         <>
-                {pollType === "Traditional" &&  <TradResults shareCode={shareCode}/> }
-                {pollType === "Ranked" && <RankedResults shareCode={shareCode}/>}
-                {pollType === "Approval" && <ApprovalResults shareCode={shareCode}/>}
+                {pollType === "Traditional" &&  <TradResults shareCode={shareCode} colorIndex={customHash(shareCode)}/> }
+                {pollType === "Ranked" && <RankedResults shareCode={shareCode} colorIndex={customHash(shareCode)}/>}
+                {pollType === "Approval" && <ApprovalResults shareCode={shareCode} colorIndex={customHash(shareCode)}/>}
                 
                 <Box sx={{
                     display: 'flex',

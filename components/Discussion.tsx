@@ -137,7 +137,7 @@ export default function Discussion({ shareCode }: DiscussionProps){
         }
         // Ensure the result is positive and within the range [1, 10]
         return ((hash & 0x7FFFFFFF) % 10) + 1;
-      }
+    }
 
 
     return(
@@ -178,7 +178,7 @@ export default function Discussion({ shareCode }: DiscussionProps){
                     >
                         <Box
                             sx={{
-                                backgroundColor: 'rgb(var(--poll-color-'+ customHash(comment.username) +'))',
+                                backgroundColor: 'rgb(var(--comment-color-'+ customHash(comment.username) +'))',
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: '40px',

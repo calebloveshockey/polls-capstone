@@ -1008,14 +1008,10 @@ function instantRunoff(ivr: {
   votes: {option_id: number, rank: number, responder: string}[]
 }{
 
-  console.log("\n------------- Running round of IVR -------------");
-  console.log(ivr);
-
   // Check if any option has votePercentage of 50% or greater
   let thresholdReached = false;
   ivr.optionsData.forEach((option) => {
     if(option.votePercentage >= 50){
-      console.log(`Option "${option.option_name}" has reached the threshold.`);
       thresholdReached = true;
     }
   });
@@ -1023,11 +1019,8 @@ function instantRunoff(ivr: {
     return ivr;
   }
 
-  // No winning option was found, need to run round of ivr, then recurse.
-  console.log("No winning option found.");
-
   if(ivr.round > ivr.optionsData.length){
-    console.log("Somehow the ivr failed to resolve.");
+    console.log("SERVER: Somehow the ivr failed to resolve.");
     return ivr;
   }
 
@@ -1053,8 +1046,6 @@ function instantRunoff(ivr: {
       }
     }
   });
-  console.log("Least popular option found: ");
-  console.log(ivr.optionsData.find((option) => option.option_id === leastPopularOption.option_id));
  
 
   // 2. Eliminate option and remove all votes for this option.
@@ -1090,8 +1081,6 @@ function instantRunoff(ivr: {
     }
     return accumulator;
   }, [] as {option_id: number; rank: number; responder: string }[]);
-  console.log("Just top ranked votes: ");
-  console.log(topRankVotes);
   //  3b. Tabulate just the top ranked votes
   topRankVotes.forEach((vote) => {
     const matchingOption = newOptionsData.find((option) => option.option_id === vote.option_id);
@@ -1365,4 +1354,41 @@ export async function getAllPolls(){
   }
 
   return {status: "FAILURE", error: "Server failed to retrieve all polls."};
+}
+
+
+// Get summary stats about the site -- admin only
+export async function getSummaryStats(){
+  console.log("SERVER: entering getSummaryStats");
+
+  try{ const client = await pool.connect();
+
+    // Validate that this is an admin
+    const validation = await validateAdmin();
+    if(validation.status === "SUCCESS"){
+      
+      // Get number of users
+      const {rows: users} = await client.query("SELECT username FROM users WHERE username IS NOT NULL");
+      const numUsers = users.length;
+
+      // Get number of polls
+      const {rows: polls} = await client.query("SELECT poll_id FROM polls");
+      const numPolls = polls.length;
+
+      // Get number of votes
+      const {rows: votes} = await client.query("SELECT response_id FROM responses");
+      const numVotes = votes.length;
+
+      client.release();
+      return{status: "SUCCESS", stats:{numUsers, numPolls, numVotes} }
+
+    }else{
+      client.release();
+      return {status: "FAILURE", error: "Only admins can access this data."};
+    }
+  } catch(error){
+    console.log("SERVER: Error getting summary data: " + error);
+  }
+
+  return {status: "FAILURE", error: "Server failed to retrieve summary data."};
 }

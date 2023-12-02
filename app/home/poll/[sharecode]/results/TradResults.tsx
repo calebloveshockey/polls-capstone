@@ -12,9 +12,10 @@ import { useRouter } from 'next/navigation';
 
 interface ShowVoteProps {
     shareCode: string;
+    colorIndex: number;
 }
 
-export default function TradResults({ shareCode }: ShowVoteProps) {
+export default function TradResults({ shareCode, colorIndex  }: ShowVoteProps) {
 
     const [showPoll, setShowPoll] = useState(false);
     const [voteData, setVoteData] = useState({
@@ -55,6 +56,10 @@ export default function TradResults({ shareCode }: ShowVoteProps) {
             <>
                 <Box sx={{
                     width: '90%',
+                    '@media (max-width: 700px)': {
+                        width: '100%',
+                        padding: '0px 5px 0px 5px'
+                    },
                 }}>
                     <Box className={styles.questionTitle}>
                         {voteData.question}
@@ -74,9 +79,12 @@ export default function TradResults({ shareCode }: ShowVoteProps) {
                             </Box>
                             <Box sx={{
                                 width: option.votePercentage+"%",
-                                backgroundColor: (option.numVotes > 0) ? `rgb(var(--poll-color-${(option.option_name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 10) + 1}))` : "",
-                            }} className={styles.rowBar}>
-                                {(option.numVotes > 0) ? (option.votePercentage + "%" + " (" + option.numVotes + ")") : ("-")}
+                            }}>
+                                <Box sx={{
+                                    backgroundColor: (option.numVotes > 0) ? `rgb(var(--poll-color-${(i + colorIndex - 1) % 10 + 1}))` : "",
+                                }} className={styles.rowBar}>
+                                    {(option.numVotes > 0) ? (option.votePercentage + "%" + " (" + option.numVotes + ")") : ("-")}
+                                </Box>
                             </Box>
                         </Box>
                     ))}
