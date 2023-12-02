@@ -94,7 +94,7 @@ export default function UsersList() {
                 onChange={handleSearchChange}
             />
             {isError && <div className={styles.errorText}>Error: {errorText}</div>}
-            <div style={{minWidth: '400px'}}>
+            <div style={{width: '400px'}}>
                 <DataGrid
                     sx={{
                         boxShadow: 5,

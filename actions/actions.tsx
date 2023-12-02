@@ -1263,3 +1263,66 @@ export async function getUserDetails(username: string){
 
   return {status: "FAILURE", error: "Server failed to retrieve user."};
 }
+
+
+// Helper function to count how many unique responses a poll got
+async function getNumResponses(poll_id: number){
+  try{ const client = await pool.connect();
+
+      // Get all responses for this poll_id
+      const {rows: responses} = await client.query('SELECT responder FROM responses WHERE poll_id = $1', [poll_id]);
+
+      //Count number of unique responders responded to this poll
+      const numResponses = new Set(responses.map(response => response.responder)).size;
+
+      client.release();
+      return numResponses;
+
+  }catch(error){
+    console.log("SERVER: Error calculating number of responses: " + error);
+    return 0;
+  }
+}
+
+
+
+// Get list of all polls for this user
+export async function getPolls(){
+  console.log("SERVER: entering getPolls");
+
+  try{ const client = await pool.connect();
+
+    // Validate that this is a user
+    const validation = await validateUser();
+    if(validation.status === "SUCCESS"){
+
+      // Get polls
+      const {rows: pollsList} = await client.query("SELECT poll_id, question, type, create_date, close_date, share_link FROM polls WHERE author = $1", [validation.user_id]);
+      client.release();
+
+      if(pollsList.length > 0){
+
+        // Get number of responses for each poll in pollsList using getNumResponses(poll_id), then return that plus the other fields we got from the DB
+        const pollsWithResponses = await Promise.all(
+          pollsList.map(async (poll) => {
+            const numResponses = await getNumResponses(poll.poll_id);
+            return {...poll, numResponses}
+         }));
+
+         return {status: "SUCCESS", polls: pollsWithResponses}
+
+
+      }else{
+        client.release();
+        return {status: "FAILUIRE", error: "You have not created any polls yet."};
+      }
+    }else{
+      client.release();
+      return {status: "FAILURE", error: "Only users can access this data."};
+    }
+  } catch(error){
+    console.log("SERVER: Error getting all users: " + error);
+  }
+
+  return {status: "FAILURE", error: "Server failed to retrieve all users."};
+}

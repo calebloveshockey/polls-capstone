@@ -53,6 +53,7 @@ export default function NavBar() {
 
         {user ? 
           <>
+            <Link href='/home/poll' className={styles.link}>Polls</Link>
             <Link href='/home/account' className={styles.link}>Account</Link>
             <Link href='/logout' className={styles.link}>Logout</Link>
           </>
