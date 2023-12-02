@@ -54,7 +54,7 @@ export default function AdminPollsList() {
                         id: index,
                         question: poll.question,
                         type: poll.type,
-                        username: poll.username,
+                        username: poll.username || "No User",
                         numResponses: poll.numResponses,
                         create_date: formatToDate(poll.create_date),
                         close_date: formatToDate(poll.close_date),
